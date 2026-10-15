@@ -1,8 +1,9 @@
+import { PlaceholderPage } from '../../shared/components/StatusViews';
+
 export function OrderListPage() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Pedidos</h1>
-      <p className="text-gray-500">La lista de pedidos aparecerá aquí.</p>
-    </div>
+    <PlaceholderPage title="Domicilios">
+      Muy pronto aquí podrá tomar domicilios y seguirlos hasta la entrega.
+    </PlaceholderPage>
   );
 }

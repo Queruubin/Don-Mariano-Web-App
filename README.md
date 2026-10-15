@@ -7,7 +7,7 @@ The product requirements are in [docs/PRD.md](docs/PRD.md).
 ## Stack
 
 - **Backend:** Django 5.1, Django REST Framework, SimpleJWT, PostgreSQL 16
-- **Frontend:** React, Vite, TypeScript
+- **Frontend:** React 19, Vite, TypeScript, Tailwind CSS v4, React Router, Zustand, TanStack Query
 - **Infrastructure for local development:** Docker Compose runs PostgreSQL, plus Redis for real time in a later milestone
 
 ## Prerequisites
@@ -76,6 +76,15 @@ pnpm dev
 
 The app runs at http://localhost:5173 and calls the API at `VITE_API_URL`, which defaults to `http://localhost:8000`.
 
+### Tests and checks
+
+```bash
+cd frontend
+pnpm test    # Vitest + Testing Library (jsdom)
+pnpm lint    # oxlint
+pnpm build   # type-check and production build
+```
+
 ## API overview
 
 All endpoints are under `/api/` and need a `Bearer` access token, except login and refresh.
@@ -85,7 +94,10 @@ All endpoints are under `/api/` and need a `Bearer` access token, except login a
 | `POST /api/auth/login/`, `POST /api/auth/refresh/`, `GET /api/auth/me/` | Authentication |
 | `/api/branches/` | Branch management. Super admin only. |
 | `/api/users/` | User management. Super admins manage every user; branch admins manage staff in their own branch. |
-| `/api/products/` | Branch catalog, with `?search=` |
+| `/api/products/` | Branch catalog. Filters: `?search=` (ranked, typo tolerant), `?category=`, `?is_active=`. `POST .../activate/` reactivates |
+| `GET /api/products/autocomplete/?q=&limit=` | Top active matches for the order cart (default 10) |
+| `GET /api/products/categories/` | Distinct categories of the branch |
+| `GET /api/products/import-template/`, `POST /api/products/import/preview/`, `POST /api/products/import/apply/` | Excel import (.xlsx): template, preview without writing, then apply. Branch admins and above |
 | `/api/customers/`, `GET /api/customers/lookup/?phone=` | Customer lookup |
 | `/api/orders/`, `POST .../transition/`, `POST .../cancel/` | Orders and their lifecycle |
 

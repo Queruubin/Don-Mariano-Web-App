@@ -1,11 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { LoginForm } from './auth/components/LoginForm';
-import { AuthGuard } from './auth/guards/AuthGuard';
-import { Layout } from './shared/components/Layout';
-import { OrderListPage } from './orders/components/OrderListPage';
-import { BranchListPage } from './branches/components/BranchListPage';
 import { UserListPage } from './auth/components/UserListPage';
+import { AuthGuard } from './auth/guards/AuthGuard';
+import { RequireRole } from './auth/guards/RequireRole';
+import { BranchListPage } from './branches/components/BranchListPage';
 import { CatalogPage } from './catalog/components/CatalogPage';
+import { OrderListPage } from './orders/components/OrderListPage';
+import { Layout } from './shared/components/Layout';
 
 export default function App() {
   return (
@@ -16,9 +17,13 @@ export default function App() {
         <Route element={<AuthGuard />}>
           <Route element={<Layout />}>
             <Route path="/" element={<OrderListPage />} />
-            <Route path="/branches" element={<BranchListPage />} />
-            <Route path="/users" element={<UserListPage />} />
             <Route path="/catalog" element={<CatalogPage />} />
+            <Route element={<RequireRole roles={['super_admin', 'branch_admin']} />}>
+              <Route path="/users" element={<UserListPage />} />
+            </Route>
+            <Route element={<RequireRole roles={['super_admin']} />}>
+              <Route path="/branches" element={<BranchListPage />} />
+            </Route>
           </Route>
         </Route>
 

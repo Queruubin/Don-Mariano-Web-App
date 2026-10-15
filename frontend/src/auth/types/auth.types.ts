@@ -1,9 +1,10 @@
+export type Role = 'super_admin' | 'branch_admin' | 'branch_staff';
+
 export interface User {
   id: number;
   email: string;
-  first_name: string;
-  last_name: string;
-  role: 'super_admin' | 'branch_staff';
+  name: string;
+  role: Role;
   branch: number | null;
   branch_name: string | null;
   is_active: boolean;

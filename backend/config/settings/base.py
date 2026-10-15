@@ -3,6 +3,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
 # Points to backend/
@@ -122,5 +123,7 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = []
 CORS_ALLOW_CREDENTIALS = True
+# Super admins pick the branch to act in with this header (apps.common.scoping).
+CORS_ALLOW_HEADERS = (*default_headers, "x-branch-id")
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

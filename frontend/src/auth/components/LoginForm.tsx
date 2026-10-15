@@ -1,5 +1,9 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { isAxiosError } from 'axios';
+import { LogIn } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import logo from '../../assets/logo_letter.png';
+import { apiErrorMessage } from '../../shared/utils/apiErrors';
 import { authService } from '../services/authService';
 import { useAuthStore } from '../store/authStore';
 
@@ -9,84 +13,86 @@ export function LoginForm() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setTokens = useAuthStore((s) => s.setTokens);
   const setUser = useAuthStore((s) => s.setUser);
+  const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  if (isAuthenticated) return <Navigate to="/" replace />;
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const tokens = await authService.login({ email, password });
+      const tokens = await authService.login({ email: email.trim(), password });
       setTokens(tokens);
-
-      const user = await authService.getMe();
-      setUser(user);
-
+      setUser(await authService.getMe());
       navigate('/');
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosErr = err as { response?: { data?: { detail?: string } } };
-        setError(axiosErr.response?.data?.detail || 'Error al iniciar sesión');
-      } else {
-        setError('Error de conexión con el servidor');
-      }
+      logout();
+      const status = isAxiosError(err) ? err.response?.status : undefined;
+      setError(
+        status === 401 || status === 400
+          ? 'El correo o la contraseña no son correctos. Revíselos e intente de nuevo.'
+          : apiErrorMessage(err),
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-2">Don Mariano</h1>
-        <p className="text-gray-500 text-center mb-6">Sistema de Gestión de Pedidos</p>
+    <div className="flex min-h-dvh items-center justify-center bg-surface-alt px-4 py-8">
+      <div className="card w-full max-w-md p-6 shadow-sm sm:p-8">
+        <img src={logo} alt="Tiendas Don Mariano" className="mx-auto mb-4 h-32 w-auto" />
+        <h1 className="mb-1 text-center text-2xl">Domicilios</h1>
+        <p className="mb-6 text-center text-text-muted">Ingrese con su correo y contraseña</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded text-sm">
+            <p role="alert" className="rounded-2xl bg-danger-soft p-3 font-semibold text-danger">
               {error}
-            </div>
+            </p>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+            <label htmlFor="email" className="field-label">
+              Correo
             </label>
             <input
               id="email"
               type="email"
+              inputMode="email"
+              autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="admin@donmariano.com"
+              className="input"
+              placeholder="nombre@donmariano.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="field-label">
               Contraseña
             </label>
             <input
               id="password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
+              className="input"
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+          <button type="submit" disabled={isLoading} className="btn btn-primary w-full text-lg">
+            <LogIn aria-hidden="true" className="size-5" />
+            {isLoading ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
       </div>

@@ -1,1 +1,119 @@
 @import "tailwindcss";
+@import "@fontsource-variable/nunito";
+
+@font-face {
+  font-family: "Comfortaa";
+  src: url("./assets/fonts/Comfortaa-VariableFont_wght.ttf") format("truetype");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Theme tokens (PRD section 6): light, warm surfaces with brown, green and gold accents. */
+@theme {
+  --color-bg: #fdfbf9;
+  --color-surface: #ffffff;
+  --color-surface-alt: #fbeede;
+  --color-border: #e8d6bf;
+  --color-primary: #308334;
+  --color-primary-hover: #1f5d24;
+  --color-primary-soft: #e6f2e6;
+  --color-accent: #f4b71e;
+  --color-accent-soft: #fdf1d0;
+  --color-text: #3a270d;
+  --color-text-muted: #553813;
+  /* Accessible red: 6.5:1 on white. */
+  --color-danger: #b42318;
+  --color-danger-hover: #8f1c13;
+  --color-danger-soft: #fdecea;
+
+  --color-status-pending: #f4b71e;
+  --color-status-preparing: #8a5a1f;
+  --color-status-on-the-way: #1d5fb8;
+  --color-status-delivered: #308334;
+  --color-status-cancelled: #6b6b6b;
+
+  --font-sans: "Nunito Variable", "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Comfortaa", "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  /* 18px base: every rem-based size scales with it. */
+  html {
+    font-size: 112.5%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-bg font-sans text-text antialiased;
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-bold text-text;
+    line-height: 1.25;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-primary-hover);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for] {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 py-2 text-base font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-hover active:bg-primary-hover;
+  }
+
+  .btn-secondary {
+    @apply border-2 border-primary bg-surface text-primary-hover hover:bg-primary-soft;
+  }
+
+  .btn-danger {
+    @apply bg-danger text-white hover:bg-danger-hover;
+  }
+
+  .btn-ghost {
+    @apply text-text-muted hover:bg-surface-alt;
+  }
+
+  .input {
+    @apply min-h-12 w-full rounded-2xl border-2 border-border bg-surface px-4 py-2 text-base text-text placeholder:text-text-muted/70 focus:border-primary;
+  }
+
+  .input[aria-invalid="true"] {
+    @apply border-danger;
+  }
+
+  .chip {
+    @apply inline-flex min-h-12 shrink-0 items-center gap-2 rounded-full border-2 border-border bg-surface px-4 text-base font-semibold text-text-muted hover:bg-surface-alt;
+  }
+
+  .chip[aria-pressed="true"] {
+    @apply border-primary bg-primary text-white hover:bg-primary-hover;
+  }
+
+  .card {
+    @apply rounded-3xl border border-border bg-surface;
+  }
+
+  .field-label {
+    @apply mb-1 block text-base font-bold text-text;
+  }
+
+  .field-error {
+    @apply mt-1 text-base font-semibold text-danger;
+  }
+}
