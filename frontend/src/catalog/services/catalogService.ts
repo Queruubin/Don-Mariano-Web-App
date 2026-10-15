@@ -20,6 +20,12 @@ export const catalogService = {
     return data;
   },
 
+  /** Top active matches for the order cart, best first. */
+  async autocomplete(query: string, limit = 8): Promise<Product[]> {
+    const { data } = await api.get<Product[]>(`${BASE}autocomplete/`, { params: { q: query, limit } });
+    return data;
+  },
+
   async categories(): Promise<string[]> {
     const { data } = await api.get<string[]>(`${BASE}categories/`);
     return data;

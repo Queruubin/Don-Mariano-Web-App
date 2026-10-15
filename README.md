@@ -98,8 +98,10 @@ All endpoints are under `/api/` and need a `Bearer` access token, except login a
 | `GET /api/products/autocomplete/?q=&limit=` | Top active matches for the order cart (default 10) |
 | `GET /api/products/categories/` | Distinct categories of the branch |
 | `GET /api/products/import-template/`, `POST /api/products/import/preview/`, `POST /api/products/import/apply/` | Excel import (.xlsx): template, preview without writing, then apply. Branch admins and above |
-| `/api/customers/`, `GET /api/customers/lookup/?phone=` | Customer lookup |
-| `/api/orders/`, `POST .../transition/`, `POST .../cancel/` | Orders and their lifecycle |
+| `/api/customers/`, `GET /api/customers/lookup/?phone=` | Customer lookup. Saved addresses come most recently used first |
+| `/api/orders/`, `POST .../transition/`, `POST .../cancel/` | Orders and their lifecycle. `PATCH` edits pending and preparing orders (items, payment, total, notes, customer and address) |
+
+Creating or editing an order sends a `customer` block with `phone`, `name`, `address_notes` and either `address_id` (one of the customer's saved addresses) or `address` (a new one, saved for next time). Phones are stored as digits only, without the Colombian `+57` prefix, so `+57 300 123 4567` and `300-123-4567` are the same customer.
 
 Branch-scoped endpoints (products, customers and orders) always act within one branch. Branch users act in their own branch. A super admin must choose a branch with the `X-Branch-Id` header.
 

@@ -12,7 +12,8 @@ from django.db import transaction
 from apps.branches.models import Branch
 from apps.catalog.models import Product
 from apps.common.exceptions import DomainError
-from apps.customers.services import upsert_address, upsert_customer
+from apps.customers.models import Customer, CustomerAddress
+from apps.customers.services import upsert_address, upsert_customer, use_saved_address
 from apps.orders.models import Order, OrderItem, OrderStatus, OrderStatusEvent, PaymentMethod
 
 NEXT_STATUS = {
@@ -35,10 +36,17 @@ class ItemData:
 
 @dataclass(frozen=True)
 class CustomerData:
+    """Who receives the order and where.
+
+    `address_id` picks one of the customer's saved addresses (FR-14);
+    otherwise `address` is typed and saved for next time.
+    """
+
     phone: str
     name: str
-    address: str
+    address: str = ""
     address_notes: str = ""
+    address_id: int | None = None
 
 
 @dataclass
@@ -114,20 +122,36 @@ def _record_event(order: Order, from_status: str, to_status: str, user) -> None:
     )
 
 
+def _resolve_customer(branch: Branch, data: CustomerData) -> tuple[Customer, CustomerAddress]:
+    """Upsert the customer and the delivery address (FR-13..15)."""
+    customer = upsert_customer(branch=branch, phone=data.phone, name=data.name)
+    if data.address_id is not None:
+        address = use_saved_address(
+            customer=customer, address_id=data.address_id, notes=data.address_notes
+        )
+        if address is None:
+            raise DomainError(
+                "La dirección elegida no es de este cliente. Elija otra o escríbala.",
+                field="address",
+                code="address_not_found",
+            )
+        return customer, address
+    if not " ".join((data.address or "").split()):
+        raise DomainError("Escriba la dirección de entrega.", field="address", code="address_required")
+    return customer, upsert_address(customer=customer, address=data.address, notes=data.address_notes)
+
+
 @transaction.atomic
 def create_order(*, branch: Branch, user, data: OrderData) -> Order:
     validate_payment(data.payment_method, data.total_amount, data.pays_with)
 
-    customer = upsert_customer(branch=branch, phone=data.customer.phone, name=data.customer.name)
-    upsert_address(
-        customer=customer, address=data.customer.address, notes=data.customer.address_notes
-    )
+    customer, address = _resolve_customer(branch, data.customer)
 
     order = Order.objects.create(
         branch=branch,
         number=next_order_number(branch),
         customer=customer,
-        address_snapshot=" ".join(data.customer.address.split()),
+        address_snapshot=address.address,
         address_notes=data.customer.address_notes,
         payment_method=data.payment_method,
         total_amount=data.total_amount,
@@ -145,16 +169,28 @@ def _lock(order: Order) -> Order:
 
 
 @transaction.atomic
-def update_order(order: Order, *, changes: dict, items: list[ItemData] | None) -> Order:
+def update_order(
+    order: Order,
+    *,
+    changes: dict,
+    items: list[ItemData] | None,
+    customer: CustomerData | None = None,
+) -> Order:
     """Edit an order while it is pending or preparing (FR-29).
 
     `changes` may contain address_snapshot, address_notes, payment_method,
     total_amount, pays_with and notes. When `items` is given it replaces all lines.
+    When `customer` is given, the customer and delivery address are upserted
+    exactly as on create and replace the order's customer and address.
     """
     order = _lock(order)
     if not is_editable(order.status):
         raise DomainError("Este pedido ya no se puede editar.", code="order_not_editable")
 
+    if customer is not None:
+        order.customer, address = _resolve_customer(order.branch, customer)
+        order.address_snapshot = address.address
+        order.address_notes = customer.address_notes
     for name, value in changes.items():
         setattr(order, name, value)
     if order.payment_method != PaymentMethod.CASH and "pays_with" not in changes:

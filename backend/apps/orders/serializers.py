@@ -135,10 +135,23 @@ class OrderItemsField(serializers.ListField):
         return items
 
 
+def _required_messages(message: str) -> dict[str, str]:
+    return {"blank": message, "required": message, "null": message}
+
+
 class OrderCustomerInputSerializer(serializers.Serializer):
-    phone = serializers.CharField(max_length=30)
-    name = serializers.CharField(max_length=150)
-    address = serializers.CharField(max_length=255)
+    """Customer block of the order form: a saved address (`address_id`) or a typed one."""
+
+    phone = serializers.CharField(
+        max_length=30,
+        error_messages=_required_messages("Escriba el teléfono del cliente."),
+    )
+    name = serializers.CharField(
+        max_length=150,
+        error_messages=_required_messages("Escriba el nombre del cliente."),
+    )
+    address = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+    address_id = serializers.IntegerField(required=False, allow_null=True, default=None)
     address_notes = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
 
     def validate_phone(self, value):
@@ -146,6 +159,11 @@ class OrderCustomerInputSerializer(serializers.Serializer):
         if len(phone) < 7:
             raise serializers.ValidationError("Ingrese un teléfono válido.")
         return phone
+
+    def validate(self, attrs):
+        if attrs.get("address_id") is None and not attrs.get("address", "").strip():
+            raise serializers.ValidationError({"address": ["Escriba la dirección de entrega."]})
+        return attrs
 
 
 class PaymentFieldsMixin(serializers.Serializer):
@@ -179,6 +197,7 @@ class OrderCreateSerializer(PaymentFieldsMixin):
 
 
 class OrderUpdateSerializer(PaymentFieldsMixin):
+    customer = OrderCustomerInputSerializer(required=False)
     address_snapshot = serializers.CharField(max_length=255, required=False)
     address_notes = serializers.CharField(max_length=255, required=False, allow_blank=True)
     items = OrderItemsField(required=False)
@@ -192,7 +211,13 @@ class OrderUpdateSerializer(PaymentFieldsMixin):
 
     def update(self, instance, validated_data):
         items = validated_data.pop("items", None)
-        return services.update_order(instance, changes=validated_data, items=items)
+        customer = validated_data.pop("customer", None)
+        return services.update_order(
+            instance,
+            changes=validated_data,
+            items=items,
+            customer=services.CustomerData(**customer) if customer else None,
+        )
 
 
 class TransitionSerializer(serializers.Serializer):

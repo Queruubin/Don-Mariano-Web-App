@@ -15,6 +15,18 @@ def normalize_text(value: str) -> str:
     return _WHITESPACE.sub(" ", without_accents).strip().lower()
 
 
+# Colombian numbers have 10 digits; "+57" / "0057" is the country prefix.
+_COUNTRY_PREFIXES = ("0057", "57")
+_LOCAL_PHONE_LENGTH = 10
+
+
 def normalize_phone(value: str) -> str:
-    """Keep digits only so "300 111-2233" and "3001112233" are the same customer."""
-    return _NON_DIGITS.sub("", value or "")
+    """Keep digits only and drop the Colombian country prefix.
+
+    "300 111-2233", "+57 300 111 2233" and "3001112233" are the same customer.
+    """
+    digits = _NON_DIGITS.sub("", value or "")
+    for prefix in _COUNTRY_PREFIXES:
+        if digits.startswith(prefix) and len(digits) == len(prefix) + _LOCAL_PHONE_LENGTH:
+            return digits[len(prefix):]
+    return digits

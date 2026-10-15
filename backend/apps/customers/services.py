@@ -16,6 +16,17 @@ def upsert_customer(*, branch: Branch, phone: str, name: str) -> Customer:
     return customer
 
 
+def use_saved_address(*, customer: Customer, address_id: int, notes: str = "") -> CustomerAddress | None:
+    """Mark one of the customer's saved addresses as just used, or None if it is not theirs."""
+    saved = customer.addresses.filter(pk=address_id).first()
+    if saved is None:
+        return None
+    saved.notes = notes
+    saved.last_used_at = timezone.now()
+    saved.save(update_fields=["notes", "last_used_at"])
+    return saved
+
+
 def upsert_address(*, customer: Customer, address: str, notes: str = "") -> CustomerAddress:
     """Reuse a saved address (case-insensitive match) or add a new one (FR-14)."""
     address = " ".join(address.split())

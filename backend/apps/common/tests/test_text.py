@@ -17,5 +17,14 @@ def test_normalize_text(raw, expected):
     assert normalize_text(raw) == expected
 
 
-def test_normalize_phone_keeps_digits():
-    assert normalize_phone("+57 300-123 4567") == "573001234567"
+@pytest.mark.parametrize(
+    "raw",
+    ["3001234567", "300 123-4567", "+57 300-123 4567", "57 3001234567", "0057 300 123 4567"],
+)
+def test_normalize_phone_keeps_local_digits(raw):
+    assert normalize_phone(raw) == "3001234567"
+
+
+def test_normalize_phone_keeps_short_numbers_untouched():
+    # Landline without area code, or a number that only starts with 57.
+    assert normalize_phone("571 2345") == "5712345"

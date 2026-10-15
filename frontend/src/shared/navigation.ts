@@ -11,7 +11,7 @@ export interface NavItem {
 const ALL_ROLES: readonly Role[] = ['super_admin', 'branch_admin', 'branch_staff'];
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { to: '/', label: 'Domicilios', icon: ClipboardList, roles: ALL_ROLES },
+  { to: '/domicilios', label: 'Domicilios', icon: ClipboardList, roles: ALL_ROLES },
   { to: '/catalog', label: 'Catálogo', icon: Package, roles: ALL_ROLES },
   { to: '/users', label: 'Usuarios', icon: Users, roles: ['super_admin', 'branch_admin'] },
   { to: '/branches', label: 'Sedes', icon: Building2, roles: ['super_admin'] },

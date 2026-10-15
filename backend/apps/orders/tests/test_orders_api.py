@@ -288,3 +288,141 @@ class TestEditRules:
 
     def test_orders_cannot_be_deleted(self, client_for, admin_a, order):
         assert client_for(admin_a).delete(detail(order)).status_code == 405
+
+
+@pytest.mark.django_db
+class TestCustomerAddressOnCreate:
+    def test_phone_with_country_prefix_is_the_same_customer(
+        self, client_for, staff_a, branch_a, order_payload
+    ):
+        client = client_for(staff_a)
+        client.post(URL, order_payload(), format="json")
+        second = order_payload()
+        second["customer"] = {**second["customer"], "phone": "+57 300-123-4567"}
+        assert client.post(URL, second, format="json").status_code == 201
+        assert Customer.objects.filter(branch=branch_a).count() == 1
+
+    def test_saved_address_id_is_used_and_marked_recent(
+        self, client_for, staff_a, branch_a, order_payload
+    ):
+        client = client_for(staff_a)
+        client.post(URL, order_payload(), format="json")
+        customer = Customer.objects.get(branch=branch_a)
+        saved = customer.addresses.get()
+        before = saved.last_used_at
+
+        payload = order_payload()
+        payload["customer"] = {
+            "phone": "3001234567",
+            "name": "Gloria Pérez",
+            "address_id": saved.pk,
+            "address_notes": "timbre dañado",
+        }
+        response = client.post(URL, payload, format="json")
+        assert response.status_code == 201, response.data
+        assert response.data["address_snapshot"] == "Cra 7 #45-10"
+        assert response.data["address_notes"] == "timbre dañado"
+        saved.refresh_from_db()
+        assert saved.last_used_at > before
+        assert saved.notes == "timbre dañado"
+        assert customer.addresses.count() == 1
+
+    def test_address_of_another_customer_is_rejected(
+        self, client_for, staff_a, make_order, branch_a, order_payload
+    ):
+        other = make_order(branch_a, staff_a, phone="3109998888")
+        payload = order_payload()
+        payload["customer"] = {
+            "phone": "3001234567",
+            "name": "Gloria",
+            "address_id": other.customer.addresses.get().pk,
+        }
+        response = client_for(staff_a).post(URL, payload, format="json")
+        assert response.status_code == 400
+        assert "address" in response.data
+        assert Order.objects.count() == 1
+
+    def test_requires_address_or_saved_address(self, client_for, staff_a, order_payload):
+        payload = order_payload()
+        payload["customer"] = {"phone": "3001234567", "name": "Gloria", "address": "  "}
+        response = client_for(staff_a).post(URL, payload, format="json")
+        assert response.status_code == 400
+        assert response.data["customer"]["address"] == ["Escriba la dirección de entrega."]
+
+    def test_missing_name_has_friendly_message(self, client_for, staff_a, order_payload):
+        payload = order_payload()
+        payload["customer"] = {**payload["customer"], "name": ""}
+        response = client_for(staff_a).post(URL, payload, format="json")
+        assert response.data["customer"]["name"] == ["Escriba el nombre del cliente."]
+
+    def test_duplicate_products_with_different_notes_are_kept(
+        self, client_for, staff_a, product_a, order_payload
+    ):
+        items = [
+            {"product": product_a.pk, "quantity": "2", "notes": "bien verde"},
+            {"product": product_a.pk, "quantity": "1", "notes": "madura", "unit": "libra"},
+        ]
+        response = client_for(staff_a).post(URL, order_payload(items=items), format="json")
+        assert response.status_code == 201
+        assert [(i["quantity"], i["unit"], i["notes"]) for i in response.data["items"]] == [
+            ("2.00", "unidad", "bien verde"),
+            ("1.00", "libra", "madura"),
+        ]
+
+
+@pytest.mark.django_db
+class TestFullEdit:
+    @pytest.fixture
+    def order(self, make_order, branch_a, staff_a):
+        return make_order(branch_a, staff_a)
+
+    def test_replaces_items_payment_and_address(self, client_for, staff_a, order):
+        response = client_for(staff_a).patch(
+            detail(order),
+            {
+                "customer": {
+                    "phone": order.customer.phone,
+                    "name": "Cliente Nuevo",
+                    "address": "Calle 80 #20-30",
+                    "address_notes": "casa azul",
+                },
+                "items": [
+                    {"name": "Papaya", "quantity": "1", "unit": "unidad", "notes": "muy madura"},
+                    {"name": "Papaya", "quantity": "0.5", "unit": "kilo"},
+                ],
+                "payment_method": "cash",
+                "total_amount": "30000",
+                "pays_with": "50000",
+                "notes": "Llamar al llegar",
+            },
+            format="json",
+        )
+        assert response.status_code == 200, response.data
+        data = response.data
+        assert data["number"] == order.number
+        assert data["customer"]["name"] == "Cliente Nuevo"
+        assert data["address_snapshot"] == "Calle 80 #20-30"
+        assert data["address_notes"] == "casa azul"
+        assert data["change_due"] == "20000"
+        assert data["notes"] == "Llamar al llegar"
+        assert [(i["name"], i["quantity"]) for i in data["items"]] == [
+            ("Papaya", "1.00"),
+            ("Papaya", "0.50"),
+        ]
+        assert order.customer.addresses.count() == 2
+
+    def test_can_switch_to_a_saved_address(self, client_for, staff_a, order):
+        customer = order.customer
+        other = customer.addresses.create(address="Calle 80 #20-30")
+        response = client_for(staff_a).patch(
+            detail(order),
+            {"customer": {"phone": customer.phone, "name": customer.name, "address_id": other.pk}},
+            format="json",
+        )
+        assert response.status_code == 200, response.data
+        assert response.data["address_snapshot"] == "Calle 80 #20-30"
+
+    def test_empty_items_are_rejected_on_edit(self, client_for, staff_a, order):
+        response = client_for(staff_a).patch(detail(order), {"items": []}, format="json")
+        assert response.status_code == 400
+        assert order.items.count() == 1

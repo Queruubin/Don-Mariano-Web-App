@@ -5,6 +5,7 @@ interface ConfirmDialogProps {
   title: string;
   children: ReactNode;
   confirmLabel: string;
+  cancelLabel?: string;
   tone?: 'primary' | 'danger';
   busy?: boolean;
   error?: string | null;
@@ -16,6 +17,7 @@ export function ConfirmDialog({
   title,
   children,
   confirmLabel,
+  cancelLabel = 'Cancelar',
   tone = 'primary',
   busy = false,
   error,
@@ -29,7 +31,7 @@ export function ConfirmDialog({
       footer={
         <>
           <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={busy}>
-            Cancelar
+            {cancelLabel}
           </button>
           <button
             type="button"
