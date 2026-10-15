@@ -1,0 +1,206 @@
+"""Order domain rules (PRD FR-15, FR-21/22, FR-26, FR-28, FR-29).
+
+Views and serializers call these functions; they never change order status
+or numbering on their own.
+"""
+
+from dataclasses import dataclass
+from decimal import Decimal
+
+from django.db import transaction
+
+from apps.branches.models import Branch
+from apps.catalog.models import Product
+from apps.common.exceptions import DomainError
+from apps.customers.services import upsert_address, upsert_customer
+from apps.orders.models import Order, OrderItem, OrderStatus, OrderStatusEvent, PaymentMethod
+
+NEXT_STATUS = {
+    OrderStatus.PENDING: OrderStatus.PREPARING,
+    OrderStatus.PREPARING: OrderStatus.ON_THE_WAY,
+    OrderStatus.ON_THE_WAY: OrderStatus.DELIVERED,
+}
+FINAL_STATUSES = frozenset({OrderStatus.DELIVERED, OrderStatus.CANCELLED})
+EDITABLE_STATUSES = frozenset({OrderStatus.PENDING, OrderStatus.PREPARING})
+
+
+@dataclass(frozen=True)
+class ItemData:
+    quantity: Decimal
+    unit: str
+    product: Product | None = None
+    name: str = ""
+    notes: str = ""
+
+
+@dataclass(frozen=True)
+class CustomerData:
+    phone: str
+    name: str
+    address: str
+    address_notes: str = ""
+
+
+@dataclass
+class OrderData:
+    customer: CustomerData
+    items: list[ItemData]
+    payment_method: str
+    total_amount: Decimal
+    pays_with: Decimal | None = None
+    notes: str = ""
+
+
+# --- Pure rules -----------------------------------------------------------
+
+
+def next_status(status: str) -> str | None:
+    return NEXT_STATUS.get(status)
+
+
+def is_editable(status: str) -> bool:
+    return status in EDITABLE_STATUSES
+
+
+def validate_payment(payment_method: str, total_amount: Decimal, pays_with: Decimal | None) -> None:
+    if total_amount is None or total_amount <= 0:
+        raise DomainError("El total debe ser mayor que cero.", field="total_amount")
+    if pays_with is None:
+        return
+    if payment_method != PaymentMethod.CASH:
+        raise DomainError(
+            "\"Paga con\" solo aplica para pagos en efectivo.", field="pays_with", code="pays_with_not_cash"
+        )
+    if pays_with < total_amount:
+        raise DomainError(
+            "\"Paga con\" no puede ser menor que el total.", field="pays_with", code="pays_with_too_low"
+        )
+
+
+# --- Commands --------------------------------------------------------------
+
+
+def next_order_number(branch: Branch) -> int:
+    """Issue the next per-branch order number.
+
+    Locks the branch row so concurrent creates in the same branch serialize;
+    other branches are unaffected. Must run inside a transaction.
+    """
+    locked = Branch.objects.select_for_update().only("id", "last_order_number").get(pk=branch.pk)
+    locked.last_order_number += 1
+    locked.save(update_fields=["last_order_number"])
+    return locked.last_order_number
+
+
+def _create_items(order: Order, items: list[ItemData]) -> None:
+    if not items:
+        raise DomainError("El pedido debe tener al menos un producto.", field="items")
+    OrderItem.objects.bulk_create(
+        OrderItem(
+            order=order,
+            product=item.product,
+            name_snapshot=item.product.name if item.product else " ".join(item.name.split()),
+            quantity=item.quantity,
+            unit=item.unit,
+            notes=item.notes,
+        )
+        for item in items
+    )
+
+
+def _record_event(order: Order, from_status: str, to_status: str, user) -> None:
+    OrderStatusEvent.objects.create(
+        order=order, from_status=from_status, to_status=to_status, changed_by=user
+    )
+
+
+@transaction.atomic
+def create_order(*, branch: Branch, user, data: OrderData) -> Order:
+    validate_payment(data.payment_method, data.total_amount, data.pays_with)
+
+    customer = upsert_customer(branch=branch, phone=data.customer.phone, name=data.customer.name)
+    upsert_address(
+        customer=customer, address=data.customer.address, notes=data.customer.address_notes
+    )
+
+    order = Order.objects.create(
+        branch=branch,
+        number=next_order_number(branch),
+        customer=customer,
+        address_snapshot=" ".join(data.customer.address.split()),
+        address_notes=data.customer.address_notes,
+        payment_method=data.payment_method,
+        total_amount=data.total_amount,
+        pays_with=data.pays_with,
+        notes=data.notes,
+        created_by=user,
+    )
+    _create_items(order, data.items)
+    _record_event(order, "", OrderStatus.PENDING, user)
+    return order
+
+
+def _lock(order: Order) -> Order:
+    return Order.objects.select_for_update().get(pk=order.pk)
+
+
+@transaction.atomic
+def update_order(order: Order, *, changes: dict, items: list[ItemData] | None) -> Order:
+    """Edit an order while it is pending or preparing (FR-29).
+
+    `changes` may contain address_snapshot, address_notes, payment_method,
+    total_amount, pays_with and notes. When `items` is given it replaces all lines.
+    """
+    order = _lock(order)
+    if not is_editable(order.status):
+        raise DomainError("Este pedido ya no se puede editar.", code="order_not_editable")
+
+    for name, value in changes.items():
+        setattr(order, name, value)
+    if order.payment_method != PaymentMethod.CASH and "pays_with" not in changes:
+        # Switching away from cash drops the "paga con" amount.
+        order.pays_with = None
+    validate_payment(order.payment_method, order.total_amount, order.pays_with)
+    order.save()
+
+    if items is not None:
+        order.items.all().delete()
+        _create_items(order, items)
+    return order
+
+
+@transaction.atomic
+def advance_order(order: Order, *, user, to_status: str | None = None) -> Order:
+    """Move an order one step forward (FR-28). `to_status`, if given, must be that step."""
+    order = _lock(order)
+    expected = next_status(order.status)
+    if expected is None:
+        raise DomainError("Este pedido ya está finalizado.", code="order_final")
+    if to_status is not None and to_status != expected:
+        raise DomainError(
+            f"No se puede pasar de \"{OrderStatus(order.status).label}\" a "
+            f"\"{OrderStatus(to_status).label}\".",
+            field="to_status",
+            code="invalid_transition",
+        )
+    previous = order.status
+    order.status = expected
+    order.save(update_fields=["status", "updated_at"])
+    _record_event(order, previous, expected, user)
+    return order
+
+
+@transaction.atomic
+def cancel_order(order: Order, *, user, reason: str) -> Order:
+    reason = (reason or "").strip()
+    if not reason:
+        raise DomainError("Indique el motivo de la cancelación.", field="reason", code="reason_required")
+    order = _lock(order)
+    if order.status in FINAL_STATUSES:
+        raise DomainError("Este pedido ya está finalizado.", code="order_final")
+    previous = order.status
+    order.status = OrderStatus.CANCELLED
+    order.cancel_reason = reason
+    order.save(update_fields=["status", "cancel_reason", "updated_at"])
+    _record_event(order, previous, OrderStatus.CANCELLED, user)
+    return order
