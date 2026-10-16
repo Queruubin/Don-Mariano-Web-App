@@ -2,9 +2,34 @@ import axios, { type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../../auth/store/authStore';
 import { useBranchStore } from '../../branches/store/branchStore';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_BASE_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const baseURL = API_BASE_URL;
 
 const api = axios.create({ baseURL });
+
+let refreshing: Promise<string> | null = null;
+
+/**
+ * Trade the refresh token for a new access token and store both. Concurrent
+ * callers (an HTTP retry and the real-time socket) share one request.
+ * Rejects when there is no refresh token or the server refuses it.
+ */
+export function refreshAccessToken(): Promise<string> {
+  if (refreshing) return refreshing;
+  const tokens = useAuthStore.getState().tokens;
+  if (!tokens?.refresh) return Promise.reject(new Error('No refresh token'));
+  // A bare axios call, so a failing refresh does not loop through the interceptor below.
+  refreshing = axios
+    .post<{ access: string; refresh?: string }>(`${baseURL}/api/auth/refresh/`, { refresh: tokens.refresh })
+    .then(({ data }) => {
+      useAuthStore.getState().setTokens({ access: data.access, refresh: data.refresh ?? tokens.refresh });
+      return data.access;
+    })
+    .finally(() => {
+      refreshing = null;
+    });
+  return refreshing;
+}
 
 export const BRANCH_HEADER = 'X-Branch-Id';
 
@@ -39,13 +64,8 @@ api.interceptors.response.use(
     ) {
       originalRequest._retry = true;
       try {
-        // A bare axios call, so a failing refresh does not loop through this interceptor.
-        const { data } = await axios.post<{ access: string; refresh?: string }>(
-          `${baseURL}/api/auth/refresh/`,
-          { refresh: tokens.refresh },
-        );
-        useAuthStore.getState().setTokens({ access: data.access, refresh: data.refresh ?? tokens.refresh });
-        originalRequest.headers.Authorization = `Bearer ${data.access}`;
+        const access = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${access}`;
         return api(originalRequest);
       } catch {
         useAuthStore.getState().logout();

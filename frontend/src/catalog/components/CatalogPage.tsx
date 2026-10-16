@@ -49,11 +49,11 @@ export function CatalogPage() {
   const adminActions = canEdit && (
     <>
       <button type="button" className="btn btn-primary" onClick={() => setDialog({ kind: 'form', product: null })}>
-        <Plus aria-hidden="true" className="size-5" />
+        <Plus aria-hidden="true" className="size-5 desk:size-4" />
         Agregar producto
       </button>
       <button type="button" className="btn btn-secondary" onClick={() => setDialog({ kind: 'import' })}>
-        <FileSpreadsheet aria-hidden="true" className="size-5" />
+        <FileSpreadsheet aria-hidden="true" className="size-5 desk:size-4" />
         Importar desde Excel
       </button>
     </>
@@ -88,10 +88,10 @@ export function CatalogPage() {
   } else {
     content = (
       <>
-        <p className="mb-2 text-text-muted" aria-live="polite">
+        <p className="mb-2 text-text-muted desk:text-sm" aria-live="polite">
           {productsLabel(total)}
         </p>
-        <ul className="space-y-3">
+        <ul className="space-y-3 desk:space-y-2">
           {items.map((product) => (
             <ProductRow
               key={product.id}
@@ -118,26 +118,26 @@ export function CatalogPage() {
 
   return (
     <div>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3 desk:mb-4">
         <div>
           <h1 className="text-3xl">Catálogo</h1>
-          {branch.name && <p className="text-text-muted">Productos de la sede {branch.name}</p>}
+          {branch.name && <p className="text-text-muted desk:text-sm">Productos de la sede {branch.name}</p>}
         </div>
-        {canEdit && <div className="flex flex-wrap gap-3">{adminActions}</div>}
+        {canEdit && <div className="flex flex-wrap gap-3 desk:gap-2">{adminActions}</div>}
       </div>
 
-      <div className="mb-4 space-y-3">
+      <div className="mb-4 space-y-3 desk:space-y-2.5">
         <div className="relative">
           <label htmlFor={searchId} className="sr-only">
             Buscar producto
           </label>
-          <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-4 size-6 -translate-y-1/2 text-text-muted" />
+          <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-4 size-6 -translate-y-1/2 text-text-muted desk:left-3 desk:size-5" />
           <input
             id={searchId}
             type="text"
             inputMode="search"
             enterKeyHint="search"
-            className="input min-h-14 pr-14 pl-13 text-lg"
+            className="input min-h-14 pr-14 pl-13 text-lg desk:min-h-10 desk:pr-11 desk:pl-10 desk:text-base"
             placeholder="Buscar producto…"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -146,7 +146,7 @@ export function CatalogPage() {
           {search && (
             <button
               type="button"
-              className="absolute top-1/2 right-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-alt"
+              className="absolute top-1/2 right-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-alt desk:right-1 desk:size-8"
               onClick={() => setSearch('')}
               aria-label="Borrar búsqueda"
             >
@@ -175,10 +175,10 @@ export function CatalogPage() {
         )}
 
         {canEdit && (
-          <label className="inline-flex min-h-12 items-center gap-3 font-semibold">
+          <label className="inline-flex min-h-12 items-center gap-3 font-semibold desk:min-h-8 desk:gap-2 desk:text-sm">
             <input
               type="checkbox"
-              className="size-6 accent-primary"
+              className="size-6 accent-primary desk:size-4"
               checked={includeInactive}
               onChange={(event) => setIncludeInactive(event.target.checked)}
             />

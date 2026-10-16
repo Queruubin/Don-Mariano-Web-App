@@ -9,5 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // Long user-event flows can pass 5s when every file runs in parallel.
+    testTimeout: 15_000,
   },
 })

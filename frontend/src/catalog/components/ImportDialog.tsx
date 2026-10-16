@@ -28,7 +28,7 @@ function errorText(error: unknown): string {
 
 function StepTitle({ number, children }: { number: number; children: string }) {
   return (
-    <p className="mb-3 text-text-muted">
+    <p className="mb-3 text-text-muted desk:text-sm">
       <span className="font-bold">Paso {number} de 3:</span> {children}
     </p>
   );
@@ -94,9 +94,9 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
       >
         <StepTitle number={3}>¡Listo!</StepTitle>
         <div role="status" className="flex flex-col items-center gap-3 py-4 text-center">
-          <CircleCheck aria-hidden="true" className="size-14 text-primary" />
+          <CircleCheck aria-hidden="true" className="size-14 text-primary desk:size-12" />
           <p className="font-display text-2xl font-bold">El catálogo quedó actualizado</p>
-          <ul className="space-y-1 text-lg">
+          <ul className="space-y-1 text-lg desk:text-base">
             <li>Productos nuevos: {counts.created}</li>
             <li>
               Productos actualizados: {counts.updated}
@@ -143,17 +143,17 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
         <StepTitle number={2}>revise los cambios antes de importar.</StepTitle>
         {file && (
           <p className="mb-3 flex items-center gap-2 font-semibold">
-            <FileSpreadsheet aria-hidden="true" className="size-5 text-primary" />
+            <FileSpreadsheet aria-hidden="true" className="size-5 text-primary desk:size-4" />
             {file.name}
           </p>
         )}
         {count === 0 && (
-          <p className="mb-3 rounded-2xl bg-accent-soft p-3 font-semibold">
+          <p className="mb-3 rounded-2xl bg-accent-soft p-3 font-semibold desk:rounded-xl desk:text-sm">
             Todos los productos válidos ya están iguales en el catálogo. No hay nada que importar.
           </p>
         )}
         {apply.error && (
-          <p role="alert" className="mb-3 rounded-2xl bg-danger-soft p-3 font-semibold text-danger">
+          <p role="alert" className="mb-3 rounded-2xl bg-danger-soft p-3 font-semibold text-danger desk:rounded-xl desk:text-sm">
             {errorText(apply.error)}
           </p>
         )}
@@ -175,14 +175,14 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
       }
     >
       <StepTitle number={1}>prepare y elija su archivo.</StepTitle>
-      <ol className="mb-5 list-decimal space-y-2 pl-6 text-lg">
+      <ol className="mb-5 list-decimal space-y-2 pl-6 text-lg desk:mb-4 desk:space-y-1.5 desk:text-base">
         <li>Descargue la plantilla y escriba un producto por fila: nombre, unidad y categoría.</li>
         <li>Guarde el archivo y elíjalo aquí. Antes de guardar nada le mostramos qué va a cambiar.</li>
       </ol>
 
       <div className="flex flex-col gap-3">
         <button type="button" className="btn btn-secondary" onClick={downloadTemplate} disabled={downloading}>
-          <Download aria-hidden="true" className="size-5" />
+          <Download aria-hidden="true" className="size-5 desk:size-4" />
           {downloading ? 'Descargando…' : 'Descargar plantilla'}
         </button>
         {templateError && <p className="field-error">{templateError}</p>}
@@ -198,17 +198,17 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
         />
         <button
           type="button"
-          className="btn btn-primary min-h-20 text-lg"
+          className="btn btn-primary min-h-20 text-lg desk:min-h-12 desk:rounded-2xl desk:text-base"
           onClick={() => inputRef.current?.click()}
           disabled={preview.isPending}
           aria-describedby={uploadError ? `${inputId}-error` : undefined}
         >
-          <FileSpreadsheet aria-hidden="true" className="size-6" />
+          <FileSpreadsheet aria-hidden="true" className="size-6 desk:size-5" />
           {preview.isPending ? 'Revisando el archivo…' : 'Elegir archivo de Excel'}
         </button>
-        {file && !preview.isPending && <p className="text-center text-text-muted">Archivo: {file.name}</p>}
+        {file && !preview.isPending && <p className="text-center text-text-muted desk:text-sm">Archivo: {file.name}</p>}
         {uploadError && (
-          <p id={`${inputId}-error`} role="alert" className="rounded-2xl bg-danger-soft p-3 font-semibold text-danger">
+          <p id={`${inputId}-error`} role="alert" className="rounded-2xl bg-danger-soft p-3 font-semibold text-danger desk:rounded-xl desk:text-sm">
             {uploadError}
           </p>
         )}

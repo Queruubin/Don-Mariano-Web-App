@@ -47,19 +47,19 @@ export function Modal({ title, onClose, children, footer, size = 'md' }: ModalPr
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`flex max-h-dvh w-full flex-col bg-surface sm:max-h-[90dvh] sm:rounded-3xl sm:shadow-xl ${size === 'lg' ? 'sm:max-w-3xl' : 'sm:max-w-xl'}`}
+        className={`flex max-h-dvh w-full flex-col bg-surface sm:max-h-[90dvh] sm:rounded-3xl sm:shadow-xl desk:rounded-2xl ${size === 'lg' ? 'sm:max-w-3xl' : 'sm:max-w-xl'}`}
       >
-        <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-3">
+        <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-3 desk:px-4 desk:py-2">
           <h2 id={titleId} className="text-xl">
             {title}
           </h2>
-          <button type="button" onClick={onClose} className="btn btn-ghost px-3" aria-label="Cerrar">
-            <X aria-hidden="true" className="size-6" />
+          <button type="button" onClick={onClose} className="btn btn-ghost px-3 desk:min-h-9 desk:px-2" aria-label="Cerrar">
+            <X aria-hidden="true" className="size-6 desk:size-5" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto px-5 py-4 desk:px-4">{children}</div>
         {footer && (
-          <div className="flex flex-wrap justify-end gap-3 border-t border-border px-5 py-3">{footer}</div>
+          <div className="flex flex-wrap justify-end gap-3 border-t border-border px-5 py-3 desk:gap-2 desk:px-4 desk:py-2.5">{footer}</div>
         )}
       </div>
     </div>

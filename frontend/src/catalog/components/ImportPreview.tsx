@@ -50,7 +50,7 @@ const VISIBLE_ROWS = 50;
 
 function RowItem({ row, group }: { row: ImportRow; group: GroupKey }) {
   return (
-    <li className="rounded-2xl border border-border bg-surface p-3">
+    <li className="rounded-2xl border border-border bg-surface p-3 desk:rounded-xl desk:px-3 desk:py-2 desk:text-sm">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="text-sm font-bold text-text-muted">Fila {row.row}</span>
         <span className="font-bold">{row.name || 'Sin nombre'}</span>
@@ -89,15 +89,15 @@ function Group({ config, rows }: { config: GroupConfig; rows: ImportRow[] }) {
   const headingId = `import-group-${config.key}`;
 
   return (
-    <section aria-labelledby={headingId} className="rounded-3xl bg-surface-alt/60 p-3">
+    <section aria-labelledby={headingId} className="rounded-3xl bg-surface-alt/60 p-3 desk:rounded-2xl desk:p-2.5">
       <details open={config.key !== 'unchanged'}>
-        <summary className="flex min-h-12 items-center gap-3 rounded-2xl px-2">
-          <Icon aria-hidden="true" className={`size-6 shrink-0 ${config.iconClass}`} />
+        <summary className="flex min-h-12 items-center gap-3 rounded-2xl px-2 desk:min-h-10 desk:gap-2.5 desk:rounded-xl">
+          <Icon aria-hidden="true" className={`size-6 shrink-0 desk:size-5 ${config.iconClass}`} />
           <span>
-            <span id={headingId} className="block text-lg font-bold">
+            <span id={headingId} className="block text-lg font-bold desk:text-base">
               {config.title} ({rows.length})
             </span>
-            <span className="block text-text-muted">{config.description}</span>
+            <span className="block text-text-muted desk:text-sm">{config.description}</span>
           </span>
         </summary>
         <ul className="mt-2 space-y-2">
@@ -117,11 +117,11 @@ function Group({ config, rows }: { config: GroupConfig; rows: ImportRow[] }) {
 
 export function ImportPreview({ preview }: { preview: Preview }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 desk:space-y-3">
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {GROUPS.map((group) => (
-          <div key={group.key} className="card p-3 text-center">
-            <dt className="text-text-muted">{group.title}</dt>
+          <div key={group.key} className="card p-3 text-center desk:py-2">
+            <dt className="text-text-muted desk:text-sm">{group.title}</dt>
             <dd className="font-display text-2xl font-bold">{preview.counts[group.key]}</dd>
           </div>
         ))}

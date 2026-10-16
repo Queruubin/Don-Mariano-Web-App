@@ -15,6 +15,7 @@ from apps.catalog.models import Product
 from apps.common.exceptions import ConflictError, DomainError
 from apps.customers.models import Customer, CustomerAddress
 from apps.customers.services import upsert_address, upsert_customer, use_saved_address
+from apps.orders import events
 from apps.orders.models import Order, OrderItem, OrderStatus, OrderStatusEvent, PaymentMethod
 
 NEXT_STATUS = {
@@ -162,6 +163,7 @@ def create_order(*, branch: Branch, user, data: OrderData) -> Order:
     )
     _create_items(order, data.items)
     _record_event(order, "", OrderStatus.PENDING, user)
+    events.emit(order, events.ORDER_CREATED, actor=user)
     return order
 
 
@@ -176,6 +178,7 @@ def update_order(
     changes: dict,
     items: list[ItemData] | None,
     customer: CustomerData | None = None,
+    user=None,
 ) -> Order:
     """Edit an order while it is pending or preparing (FR-29).
 
@@ -183,6 +186,7 @@ def update_order(
     total_amount, pays_with and notes. When `items` is given it replaces all lines.
     When `customer` is given, the customer and delivery address are upserted
     exactly as on create and replace the order's customer and address.
+    `user` is who made the change, for the real-time event.
     """
     order = _lock(order)
     if not is_editable(order.status):
@@ -203,6 +207,7 @@ def update_order(
     if items is not None:
         order.items.all().delete()
         _create_items(order, items)
+    events.emit(order, events.ORDER_UPDATED, actor=user)
     return order
 
 
@@ -229,6 +234,8 @@ def _set_status(order: Order, to_status: str, *, user, reason: str = "") -> Orde
         fields.append("cancel_reason")
     order.save(update_fields=fields)
     _record_event(order, previous, to_status, user, reason)
+    event_type = events.ORDER_CANCELLED if to_status == OrderStatus.CANCELLED else events.ORDER_STATUS_CHANGED
+    events.emit(order, event_type, actor=user, from_status=previous, to_status=to_status)
     return order
 
 

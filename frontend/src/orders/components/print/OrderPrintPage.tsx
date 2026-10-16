@@ -3,13 +3,14 @@ import type { ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useActiveBranch } from '../../../branches/hooks/useBranches';
 import { ErrorState, ListSkeleton } from '../../../shared/components/StatusViews';
-import { apiErrorMessage } from '../../../shared/utils/apiErrors';
+import { apiErrorMessage, isNotFoundError } from '../../../shared/utils/apiErrors';
 import { describeQuantity } from '../../form/quantity';
 import { money, orderPath } from '../../format';
 import { useOrder } from '../../hooks/useOrders';
 import { formatOrderNumber, paymentLabel, STATUS_META } from '../../labels';
 import { formatDateTime } from '../../time';
 import type { Order } from '../../types/order.types';
+import { OrderNotFound } from '../OrderNotFound';
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -94,6 +95,7 @@ export function OrderPrintPage() {
 
   let content;
   if (order.isPending) content = <ListSkeleton rows={3} />;
+  else if (isNotFoundError(order.error)) content = <OrderNotFound />;
   else if (order.isError) {
     content = (
       <ErrorState
@@ -107,16 +109,16 @@ export function OrderPrintPage() {
     <div className="min-h-dvh bg-bg px-4 py-4 print:bg-white print:p-0">
       <div className="mx-auto mb-4 flex max-w-sm flex-wrap gap-3 print:hidden">
         <Link to={orderPath(orderId)} className="btn btn-ghost flex-1 px-3">
-          <ArrowLeft aria-hidden="true" className="size-6" />
+          <ArrowLeft aria-hidden="true" className="size-6 desk:size-5" />
           Volver
         </Link>
         <button
           type="button"
-          className="btn btn-primary min-h-14 flex-1 px-6 text-lg"
+          className="btn btn-primary min-h-14 flex-1 px-6 text-lg desk:min-h-10 desk:text-base"
           disabled={!order.isSuccess}
           onClick={() => window.print()}
         >
-          <Printer aria-hidden="true" className="size-6" />
+          <Printer aria-hidden="true" className="size-6 desk:size-5" />
           Imprimir
         </button>
       </div>

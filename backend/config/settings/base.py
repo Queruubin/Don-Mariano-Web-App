@@ -18,6 +18,8 @@ DEBUG = False
 ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
+    # ASGI server. Listed first so `runserver` serves HTTP and WebSockets.
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -27,12 +29,14 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "rest_framework",
     "corsheaders",
+    "channels",
     "apps.common",
     "apps.users",
     "apps.branches",
     "apps.catalog",
     "apps.customers",
     "apps.orders",
+    "apps.realtime",
 ]
 
 MIDDLEWARE = [
@@ -65,6 +69,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
 # Defaults to the `db` service from the root docker-compose.yml.
 DEFAULT_DATABASE_URL = "postgres://don_mariano:don_mariano@localhost:5432/don_mariano"
@@ -127,3 +132,40 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = (*default_headers, "x-branch-id")
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# --- Real time (PRD FR-30) -------------------------------------------------
+# Defaults to the `redis` service from the root docker-compose.yml.
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                {
+                    "address": REDIS_URL,
+                    # Fail fast when Redis is down; the board falls back to polling.
+                    "socket_connect_timeout": 2,
+                    # Must exceed the 5s blocking read channels_redis uses to wait for
+                    # messages. redis-py 8 defaults to 5s, which drops idle sockets.
+                    "socket_timeout": 15,
+                }
+            ],
+            "expiry": 30,
+        },
+    },
+}
+
+# Timers of the /ws/branch/ socket, in seconds (see apps.realtime.protocol).
+REALTIME = {
+    "AUTH_TIMEOUT": 5,
+    "IDLE_TIMEOUT": 75,
+    "REVALIDATE_INTERVAL": 60,
+    "TICK": 1,
+    "PUBLISH_TIMEOUT": 2,
+    "FAILURE_COOLDOWN": 5,
+}
+
+# Browser origins allowed to open sockets. Empty means "the CORS allowed origins".
+WEBSOCKET_ALLOWED_ORIGINS = []
+

@@ -21,8 +21,8 @@ interface ConfirmOrderDialogProps {
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="border-b border-border py-2 last:border-b-0">
-      <dt className="font-bold text-text-muted">{label}</dt>
-      <dd className="text-lg break-words">{children}</dd>
+      <dt className="font-bold text-text-muted desk:text-sm">{label}</dt>
+      <dd className="text-lg break-words desk:text-base">{children}</dd>
     </div>
   );
 }
@@ -49,7 +49,7 @@ export function ConfirmOrderDialog({
           <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={busy}>
             Volver
           </button>
-          <button type="button" className="btn btn-primary min-h-14 px-8 text-lg" onClick={onConfirm} disabled={busy}>
+          <button type="button" className="btn btn-primary min-h-14 px-8 text-lg desk:min-h-10 desk:px-6 desk:text-base" onClick={onConfirm} disabled={busy}>
             {busy ? busyLabel : confirmLabel}
           </button>
         </>

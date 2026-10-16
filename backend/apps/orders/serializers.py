@@ -227,6 +227,7 @@ class OrderUpdateSerializer(PaymentFieldsMixin):
             changes=validated_data,
             items=items,
             customer=services.CustomerData(**customer) if customer else None,
+            user=self.context["request"].user,
         )
 
 

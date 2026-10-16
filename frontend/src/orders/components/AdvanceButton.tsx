@@ -27,12 +27,12 @@ export function AdvanceButton({ order, className = '' }: { order: BoardOrder | O
   return (
     <button
       type="button"
-      className={`btn btn-primary min-h-14 text-lg ${className}`}
+      className={`btn btn-primary min-h-14 text-lg desk:min-h-10 desk:text-base ${className}`}
       disabled={busy}
       title={`${label}: domicilio ${formatOrderNumber(order.number)}`}
       onClick={() => advance.mutate(order)}
     >
-      <Icon aria-hidden="true" className="size-6" />
+      <Icon aria-hidden="true" className="size-6 desk:size-5" />
       {label}
     </button>
   );

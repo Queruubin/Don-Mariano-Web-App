@@ -13,9 +13,9 @@ export function EmptyState({
   actions?: ReactNode;
 }) {
   return (
-    <div className="card flex flex-col items-center gap-3 px-6 py-10 text-center">
-      <span className="flex size-16 items-center justify-center rounded-full bg-surface-alt text-text-muted">
-        <Icon aria-hidden="true" className="size-8" />
+    <div className="card flex flex-col items-center gap-3 px-6 py-10 text-center desk:py-8">
+      <span className="flex size-16 items-center justify-center rounded-full bg-surface-alt text-text-muted desk:size-12">
+        <Icon aria-hidden="true" className="size-8 desk:size-6" />
       </span>
       <h2 className="text-xl">{title}</h2>
       {children && <div className="max-w-md text-text-muted">{children}</div>}
@@ -26,8 +26,8 @@ export function EmptyState({
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div role="alert" className="card flex flex-col items-center gap-3 border-danger/40 px-6 py-10 text-center">
-      <CircleAlert aria-hidden="true" className="size-10 text-danger" />
+    <div role="alert" className="card flex flex-col items-center gap-3 border-danger/40 px-6 py-10 text-center desk:py-8">
+      <CircleAlert aria-hidden="true" className="size-10 text-danger desk:size-8" />
       <p className="text-lg font-bold">{message}</p>
       {onRetry && (
         <button type="button" className="btn btn-secondary" onClick={onRetry}>
@@ -55,7 +55,7 @@ export function PlaceholderPage({ title, children }: { title: string; children: 
   return (
     <div>
       <h1 className="mb-4 text-3xl">{title}</h1>
-      <div className="card p-6 text-lg text-text-muted">{children}</div>
+      <div className="card p-6 text-lg text-text-muted desk:p-5 desk:text-base">{children}</div>
     </div>
   );
 }

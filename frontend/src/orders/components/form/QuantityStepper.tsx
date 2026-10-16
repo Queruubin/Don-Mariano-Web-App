@@ -19,12 +19,12 @@ export function QuantityStepper({ id, itemName, value, unit, invalid, describedB
     <div className="flex items-center gap-1">
       <button
         type="button"
-        className="btn btn-secondary size-12 shrink-0 px-0"
+        className="btn btn-secondary size-12 shrink-0 px-0 desk:size-10"
         aria-label={`Disminuir cantidad de ${itemName}`}
         disabled={!canDecrease(value, unit)}
         onClick={() => onChange(decreaseQuantity(value, unit))}
       >
-        <Minus aria-hidden="true" className="size-6" />
+        <Minus aria-hidden="true" className="size-6 desk:size-5" />
       </button>
       <label htmlFor={id} className="sr-only">
         Cantidad de {itemName}
@@ -34,7 +34,7 @@ export function QuantityStepper({ id, itemName, value, unit, invalid, describedB
         type="text"
         inputMode="decimal"
         autoComplete="off"
-        className="input w-24 px-2 text-center text-xl font-bold tabular-nums"
+        className="input w-24 px-2 text-center text-xl font-bold tabular-nums desk:w-20 desk:text-lg"
         value={value}
         onChange={(event) => onChange(sanitizeQuantityInput(event.target.value))}
         onFocus={(event) => event.target.select()}
@@ -43,11 +43,11 @@ export function QuantityStepper({ id, itemName, value, unit, invalid, describedB
       />
       <button
         type="button"
-        className="btn btn-secondary size-12 shrink-0 px-0"
+        className="btn btn-secondary size-12 shrink-0 px-0 desk:size-10"
         aria-label={`Aumentar cantidad de ${itemName}`}
         onClick={() => onChange(increaseQuantity(value, unit))}
       >
-        <Plus aria-hidden="true" className="size-6" />
+        <Plus aria-hidden="true" className="size-6 desk:size-5" />
       </button>
     </div>
   );

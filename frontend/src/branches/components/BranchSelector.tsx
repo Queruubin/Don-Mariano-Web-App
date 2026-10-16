@@ -23,13 +23,13 @@ export function BranchSelector() {
 
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor={id} className="flex items-center gap-1 font-bold text-text-muted">
-        <Store aria-hidden="true" className="size-5" />
+      <label htmlFor={id} className="flex items-center gap-1 font-bold text-text-muted desk:text-sm">
+        <Store aria-hidden="true" className="size-5 desk:size-4" />
         Sede
       </label>
       <select
         id={id}
-        className="input w-full py-1 sm:w-56"
+        className="input w-full py-1 sm:w-56 desk:min-h-9 desk:w-48 desk:text-sm"
         value={selectedBranchId ?? ''}
         disabled={isLoading || !branches?.length}
         onChange={(event) => setSelectedBranchId(Number(event.target.value))}

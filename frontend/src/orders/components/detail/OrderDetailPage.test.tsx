@@ -67,6 +67,14 @@ describe('order detail', () => {
     expect(screen.getByRole('link', { name: 'Volver a domicilios' })).toHaveAttribute('href', '/domicilios');
   });
 
+  it('shows a friendly Spanish message when the order does not exist', async () => {
+    vi.mocked(orderService.get).mockRejectedValue(apiError(404, { detail: 'No Order matches the given query.' }));
+    renderDetail();
+    expect(await screen.findByRole('heading', { name: 'No encontramos este domicilio' })).toBeInTheDocument();
+    expect(screen.queryByText(/No Order matches/)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Volver a domicilios' })).toHaveAttribute('href', '/domicilios');
+  });
+
   it('shows the status history with who and when, then the steps left', async () => {
     renderDetail();
     const timeline = await screen.findByRole('list', { name: 'Historial del domicilio' });

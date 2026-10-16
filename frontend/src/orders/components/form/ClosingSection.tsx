@@ -30,7 +30,7 @@ export function ClosingSection({
   const quickAmounts = quickPayAmounts(values.total);
   return (
     <SectionCard title="Pago" icon={HandCoins} className="lg:col-start-2 lg:row-start-2">
-      <div className="space-y-5">
+      <div className="space-y-5 desk:space-y-4">
         <div>
           <p id="order-payment-label" className="field-label">
             ¿Cómo paga?
@@ -50,9 +50,9 @@ export function ClosingSection({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => onPaymentMethodChange(value)}
-                  className={`flex min-h-16 items-center justify-center gap-2 rounded-2xl border-2 px-2 text-lg font-bold ${selected ? 'border-primary bg-primary text-white' : 'border-border bg-surface text-text hover:bg-surface-alt'}`}
+                  className={`flex min-h-16 items-center justify-center gap-2 rounded-2xl border-2 px-2 text-lg font-bold desk:min-h-11 desk:rounded-xl desk:text-base ${selected ? 'border-primary bg-primary text-white' : 'border-border bg-surface text-text hover:bg-surface-alt'}`}
                 >
-                  <Icon aria-hidden="true" className="size-6 shrink-0" />
+                  <Icon aria-hidden="true" className="size-6 shrink-0 desk:size-5" />
                   {label}
                 </button>
               );
@@ -71,7 +71,7 @@ export function ClosingSection({
         />
 
         {values.paymentMethod === 'cash' && (
-          <div className="space-y-2 rounded-2xl bg-surface-alt/60 p-3">
+          <div className="space-y-2 rounded-2xl bg-surface-alt/60 p-3 desk:rounded-xl">
             <MoneyInput
               id="order-pays-with"
               label="¿Con cuánto paga? (opcional)"

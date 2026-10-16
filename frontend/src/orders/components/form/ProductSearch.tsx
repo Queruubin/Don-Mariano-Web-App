@@ -85,7 +85,7 @@ export function ProductSearch({ inputRef, error, onAdd }: ProductSearchProps) {
         Agregar producto
       </label>
       <div className="relative">
-        <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-4 size-6 -translate-y-1/2 text-text-muted" />
+        <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-4 size-6 -translate-y-1/2 text-text-muted desk:left-3 desk:size-5" />
         <input
           ref={inputRef}
           id="order-product-search"
@@ -94,7 +94,7 @@ export function ProductSearch({ inputRef, error, onAdd }: ProductSearchProps) {
           autoComplete="off"
           enterKeyHint="enter"
           placeholder="Escriba el producto, ej: aguacate"
-          className="input min-h-14 pr-12 pl-12 text-lg"
+          className="input min-h-14 pr-12 pl-12 text-lg desk:min-h-11 desk:pr-10 desk:pl-10 desk:text-base"
           value={query}
           aria-expanded={showList}
           aria-controls={listId}
@@ -115,7 +115,7 @@ export function ProductSearch({ inputRef, error, onAdd }: ProductSearchProps) {
         {hasQuery && isSearching && (
           <LoaderCircle
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 right-4 size-6 -translate-y-1/2 animate-spin text-text-muted"
+            className="pointer-events-none absolute top-1/2 right-4 size-6 -translate-y-1/2 animate-spin text-text-muted desk:right-3 desk:size-5"
           />
         )}
       </div>
@@ -125,7 +125,7 @@ export function ProductSearch({ inputRef, error, onAdd }: ProductSearchProps) {
         role="listbox"
         aria-label="Productos encontrados"
         hidden={!showList}
-        className="absolute inset-x-0 z-20 mt-1 max-h-[22rem] overflow-y-auto rounded-2xl border-2 border-border bg-surface py-1 shadow-lg"
+        className="absolute inset-x-0 z-20 mt-1 max-h-[22rem] overflow-y-auto rounded-2xl border-2 border-border bg-surface py-1 shadow-lg desk:rounded-xl"
       >
         {options.map((option, index) => (
           <li
@@ -137,16 +137,16 @@ export function ProductSearch({ inputRef, error, onAdd }: ProductSearchProps) {
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => choose(option)}
             onMouseEnter={() => setActive(index)}
-            className={`flex min-h-12 items-center gap-3 px-4 py-2 text-lg ${index === active ? 'bg-primary-soft' : ''} ${option.kind === 'free' ? 'border-t border-border font-semibold text-primary-hover' : ''}`}
+            className={`flex min-h-12 items-center gap-3 px-4 py-2 text-lg desk:min-h-9 desk:px-3 desk:py-1.5 desk:text-base ${index === active ? 'bg-primary-soft' : ''} ${option.kind === 'free' ? 'border-t border-border font-semibold text-primary-hover' : ''}`}
           >
             {option.kind === 'product' ? (
               <>
                 <span className="min-w-0 flex-1 break-words font-semibold">{option.product.name}</span>
-                <span className="shrink-0 text-base text-text-muted">{unitLabel(option.product.default_unit)}</span>
+                <span className="shrink-0 text-base text-text-muted desk:text-sm">{unitLabel(option.product.default_unit)}</span>
               </>
             ) : (
               <>
-                <Plus aria-hidden="true" className="size-5 shrink-0" />
+                <Plus aria-hidden="true" className="size-5 shrink-0 desk:size-4" />
                 <span className="min-w-0 break-words">Agregar «{option.name}» como producto libre</span>
               </>
             )}

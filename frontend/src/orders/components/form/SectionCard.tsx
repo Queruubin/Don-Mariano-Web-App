@@ -14,9 +14,9 @@ export function SectionCard({ title, icon: Icon, className = '', aside, children
   const headingId = useId();
   return (
     <section aria-labelledby={headingId} className={`card min-w-0 overflow-hidden ${className}`}>
-      <div className="flex items-center justify-between gap-3 bg-surface-alt px-4 py-3">
-        <h2 id={headingId} className="flex items-center gap-2 text-xl">
-          <Icon aria-hidden="true" className="size-6 text-text-muted" />
+      <div className="flex items-center justify-between gap-3 bg-surface-alt px-4 py-3 desk:py-2">
+        <h2 id={headingId} className="flex items-center gap-2 text-xl desk:text-lg">
+          <Icon aria-hidden="true" className="size-6 text-text-muted desk:size-5" />
           {title}
         </h2>
         {aside}

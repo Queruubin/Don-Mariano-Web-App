@@ -25,7 +25,7 @@ function LookupStatus({ lookup }: { lookup: LookupState }) {
   if (lookup.isSearching) {
     return (
       <p className="mt-2 flex items-center gap-2 text-text-muted">
-        <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
+        <LoaderCircle aria-hidden="true" className="size-5 animate-spin desk:size-4" />
         Buscando cliente…
       </p>
     );
@@ -36,15 +36,15 @@ function LookupStatus({ lookup }: { lookup: LookupState }) {
   if (!lookup.isDone) return null;
   if (lookup.customer) {
     return (
-      <p className="mt-2 flex items-center gap-2 rounded-2xl bg-primary-soft px-3 py-2 font-bold text-primary-hover">
-        <CircleCheck aria-hidden="true" className="size-6 shrink-0" />
+      <p className="mt-2 flex items-center gap-2 rounded-2xl bg-primary-soft px-3 py-2 font-bold text-primary-hover desk:rounded-xl desk:py-1.5 desk:text-sm">
+        <CircleCheck aria-hidden="true" className="size-6 shrink-0 desk:size-5" />
         Cliente encontrado
       </p>
     );
   }
   return (
-    <p className="mt-2 flex items-center gap-2 rounded-2xl bg-accent-soft px-3 py-2 font-semibold">
-      <UserPlus aria-hidden="true" className="size-6 shrink-0" />
+    <p className="mt-2 flex items-center gap-2 rounded-2xl bg-accent-soft px-3 py-2 font-semibold desk:rounded-xl desk:py-1.5 desk:text-sm">
+      <UserPlus aria-hidden="true" className="size-6 shrink-0 desk:size-5" />
       Cliente nuevo: escriba su nombre y dirección.
     </p>
   );
@@ -65,10 +65,10 @@ function AddressCard({
 }) {
   return (
     <label
-      className={`flex min-h-14 items-start gap-3 rounded-2xl border-2 p-3 ${checked ? 'border-primary bg-primary-soft' : 'border-border bg-surface hover:bg-surface-alt'}`}
+      className={`flex min-h-14 items-start gap-3 rounded-2xl border-2 p-3 desk:min-h-10 desk:gap-2.5 desk:rounded-xl desk:px-3 desk:py-2 ${checked ? 'border-primary bg-primary-soft' : 'border-border bg-surface hover:bg-surface-alt'}`}
     >
-      <input type="radio" name="order-address-choice" className="mt-1 size-6 shrink-0 accent-primary" checked={checked} onChange={onSelect} />
-      <Icon aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-text-muted" />
+      <input type="radio" name="order-address-choice" className="mt-1 size-6 shrink-0 accent-primary desk:mt-0.5 desk:size-5" checked={checked} onChange={onSelect} />
+      <Icon aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-text-muted desk:size-5" />
       <span className="min-w-0 break-words">
         <span className="block font-bold">{title}</span>
         {detail && <span className="block text-text-muted">{detail}</span>}
@@ -84,7 +84,7 @@ export function CustomerSection({ values, errors, lookup, onChange, onChooseAddr
 
   return (
     <SectionCard title="Cliente" icon={UserRound} className="lg:col-start-2 lg:row-start-1">
-      <div className="space-y-4">
+      <div className="space-y-4 desk:space-y-3">
         <div>
           <label htmlFor="order-phone" className="field-label">
             Teléfono
@@ -95,7 +95,7 @@ export function CustomerSection({ values, errors, lookup, onChange, onChooseAddr
             inputMode="tel"
             autoComplete="off"
             placeholder="Ej: 300 123 4567"
-            className="input text-xl tabular-nums"
+            className="input text-xl tabular-nums desk:text-lg"
             value={values.phone}
             onChange={(event) => onChange('phone', event.target.value)}
             aria-invalid={errors.phone ? true : undefined}

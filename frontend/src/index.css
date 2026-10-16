@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "@fontsource-variable/nunito";
 
+/* The one desktop condition: a wide screen used with a mouse. Touch tablets in
+   landscape are just as wide but match pointer: coarse, so they keep the big UI. */
+@custom-variant desk (@media (min-width: 1024px) and (pointer: fine));
+
 @font-face {
   font-family: "Comfortaa";
   src: url("./assets/fonts/Comfortaa-VariableFont_wght.ttf") format("truetype");
@@ -35,6 +39,19 @@
 
   --font-sans: "Nunito Variable", "Nunito", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Comfortaa", "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* New order card (FR-30): a soft gold glow that pulses. Only with motion allowed. */
+  --animate-new-order: new-order-glow 1.6s ease-in-out infinite;
+
+  @keyframes new-order-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgb(244 183 30 / 0.65);
+    }
+    50% {
+      box-shadow: 0 0 0 12px rgb(244 183 30 / 0);
+    }
+  }
 }
 
 @layer base {
@@ -42,6 +59,23 @@
   html {
     font-size: 112.5%;
     -webkit-text-size-adjust: 100%;
+  }
+
+  /* Desktop with a mouse: 15px base so the touch-sized UI scales down evenly,
+     plus a tighter type scale for headings and large text.
+     Touch tablets keep 18px even when wide, because they match pointer: coarse. */
+  @variant desk {
+    html {
+      font-size: 93.75%;
+    }
+
+    :root {
+      --text-lg: 1.0625rem;
+      --text-xl: 1.1875rem;
+      --text-2xl: 1.375rem;
+      --text-3xl: 1.625rem;
+      --text-4xl: 1.875rem;
+    }
   }
 
   body {
@@ -70,7 +104,7 @@
 
 @layer components {
   .btn {
-    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 py-2 text-base font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 py-2 text-base font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 desk:min-h-10 desk:gap-1.5 desk:px-4 desk:py-1.5;
   }
 
   .btn-primary {
@@ -90,7 +124,7 @@
   }
 
   .input {
-    @apply min-h-12 w-full rounded-2xl border-2 border-border bg-surface px-4 py-2 text-base text-text placeholder:text-text-muted/70 focus:border-primary;
+    @apply min-h-12 w-full rounded-2xl border-2 border-border bg-surface px-4 py-2 text-base text-text placeholder:text-text-muted/70 focus:border-primary desk:min-h-10 desk:rounded-xl desk:px-3 desk:py-1.5;
   }
 
   .input[aria-invalid="true"] {
@@ -98,7 +132,7 @@
   }
 
   .chip {
-    @apply inline-flex min-h-12 shrink-0 items-center gap-2 rounded-full border-2 border-border bg-surface px-4 text-base font-semibold text-text-muted hover:bg-surface-alt;
+    @apply inline-flex min-h-12 shrink-0 items-center gap-2 rounded-full border-2 border-border bg-surface px-4 text-base font-semibold text-text-muted hover:bg-surface-alt desk:min-h-9 desk:px-3 desk:text-sm;
   }
 
   .chip[aria-pressed="true"] {
@@ -106,15 +140,15 @@
   }
 
   .card {
-    @apply rounded-3xl border border-border bg-surface;
+    @apply rounded-3xl border border-border bg-surface desk:rounded-2xl;
   }
 
   .field-label {
-    @apply mb-1 block text-base font-bold text-text;
+    @apply mb-1 block text-base font-bold text-text desk:text-sm;
   }
 
   .field-error {
-    @apply mt-1 text-base font-semibold text-danger;
+    @apply mt-1 text-base font-semibold text-danger desk:text-sm;
   }
 }
 

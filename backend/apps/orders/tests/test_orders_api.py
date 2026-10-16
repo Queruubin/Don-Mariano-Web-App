@@ -25,7 +25,9 @@ class TestOrderScoping:
     ):
         foreign = make_order(branch_b, staff_b)
         client = client_for(staff_a)
-        assert client.get(detail(foreign)).status_code == 404
+        response = client.get(detail(foreign))
+        assert response.status_code == 404
+        assert response.data == {"detail": "No encontramos lo que busca. Puede que ya no exista."}
         assert client.patch(detail(foreign), {"notes": "x"}, format="json").status_code == 404
         assert client.post(f"{detail(foreign)}transition/").status_code == 404
         assert client.post(f"{detail(foreign)}cancel/", {"reason": "x"}, format="json").status_code == 404

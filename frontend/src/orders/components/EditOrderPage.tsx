@@ -2,12 +2,13 @@ import { Lock } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { EmptyState, ErrorState, ListSkeleton } from '../../shared/components/StatusViews';
-import { apiErrorMessage } from '../../shared/utils/apiErrors';
+import { apiErrorMessage, isNotFoundError } from '../../shared/utils/apiErrors';
 import { valuesFromOrder } from '../form/orderForm';
 import { useOrder } from '../hooks/useOrders';
 import { formatOrderNumber, STATUS_META } from '../labels';
 import type { Order } from '../types/order.types';
 import { ORDERS_PATH, OrderForm } from './OrderForm';
+import { OrderNotFound } from './OrderNotFound';
 
 function EditForm({ order }: { order: Order }) {
   // Snapshot once: refetches must not reset what the user is typing.
@@ -31,6 +32,7 @@ export function EditOrderPage() {
 
   if (order.isPending) return <ListSkeleton rows={4} />;
   if (order.isError) {
+    if (isNotFoundError(order.error)) return <OrderNotFound />;
     return (
       <ErrorState
         message={`No pudimos cargar el domicilio. ${apiErrorMessage(order.error)}`}

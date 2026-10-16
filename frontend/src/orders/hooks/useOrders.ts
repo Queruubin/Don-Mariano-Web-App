@@ -2,6 +2,7 @@ import { isAxiosError } from 'axios';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useActiveBranch } from '../../branches/hooks/useBranches';
 import { catalogService } from '../../catalog/services/catalogService';
+import { useConnectionStore } from '../../realtime/connectionStore';
 import { customerService } from '../../customers/services/customerService';
 import { useDebouncedValue } from '../../shared/hooks/useDebouncedValue';
 import { showToast } from '../../shared/toast/toastStore';
@@ -14,17 +15,27 @@ import type { BoardOrder, Order, OrderInput, OrderStatus } from '../types/order.
 
 export { orderKeys } from '../cache';
 
-/** Polling until real time arrives (milestone 5), and the fallback after it (PRD section 5). */
+/** Polling while the real-time connection is down (PRD section 5). */
 export const BOARD_REFRESH_MS = 15_000;
+/** Safety-net polling while real time is live: events keep the board current. */
+export const LIVE_REFRESH_MS = 60_000;
+
+/** How often order screens poll: slowly while the socket is live, every 15s otherwise. */
+export function useOrderRefreshInterval(): number {
+  const live = useConnectionStore((s) => s.status === 'live');
+  return live ? LIVE_REFRESH_MS : BOARD_REFRESH_MS;
+}
 
 /**
- * Active orders plus today's finished ones (FR-27). Refreshes every 15s and
- * when the tablet comes back to the app, but never while a status change is
- * on its way, so an optimistic move is not undone by an older response.
+ * Active orders plus today's finished ones (FR-27). Kept current by real-time
+ * events, with polling as the fallback and on return to the app, but never
+ * polls while a status change is on its way, so an optimistic move is not
+ * undone by an older response.
  */
 export function useBoardOrders() {
   const queryClient = useQueryClient();
   const { id: branchId } = useActiveBranch();
+  const refreshMs = useOrderRefreshInterval();
   return useQuery({
     queryKey: orderKeys.board(branchId),
     queryFn: orderService.listBoard,
@@ -32,12 +43,13 @@ export function useBoardOrders() {
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchInterval: () =>
-      queryClient.isMutating({ mutationKey: orderKeys.lifecycle(branchId) }) > 0 ? false : BOARD_REFRESH_MS,
+      queryClient.isMutating({ mutationKey: orderKeys.lifecycle(branchId) }) > 0 ? false : refreshMs,
   });
 }
 
 export function useOrder(id: number, { live = false }: { live?: boolean } = {}) {
   const { id: branchId } = useActiveBranch();
+  const refreshMs = useOrderRefreshInterval();
   return useQuery({
     queryKey: orderKeys.detail(branchId, id),
     queryFn: () => orderService.get(id),
@@ -45,7 +57,7 @@ export function useOrder(id: number, { live = false }: { live?: boolean } = {}) 
     // Always show and edit the latest version.
     staleTime: 0,
     refetchOnWindowFocus: live,
-    refetchInterval: live ? BOARD_REFRESH_MS : false,
+    refetchInterval: live ? refreshMs : false,
   });
 }
 

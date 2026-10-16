@@ -1,5 +1,7 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearHighlights, highlightOrder } from '../../alerts/newOrderAlerts';
+import { applyOrderEvent } from '../../realtime';
 import { orderService } from '../../services/orderService';
 import { apiError, makeBoardOrder, makeOrder, renderRoutes } from '../../test/fixtures';
 import type { Order } from '../../types/order.types';
@@ -227,5 +229,42 @@ describe('order board on a phone', () => {
     await user.click(screen.getByRole('tab', { name: /Terminados/ }));
     expect(within(screen.getByRole('tabpanel')).getByRole('article', { name: '#0138' })).toBeInTheDocument();
     expect(within(screen.getByRole('tabpanel')).getByRole('article', { name: '#0139' })).toBeInTheDocument();
+  });
+});
+
+describe('order board in real time', () => {
+  afterEach(() => clearHighlights());
+
+  it('moves a card when another screen advances the order', async () => {
+    const { queryClient } = renderBoard();
+    await screen.findByRole('article', { name: '#0142' });
+    expect(within(column(/Pendientes/)).getByRole('article', { name: '#0142' })).toBeInTheDocument();
+
+    const later = new Date(Date.now() + 1_000).toISOString();
+    act(() => {
+      applyOrderEvent(queryClient, 1, {
+        type: 'order.status_changed',
+        event_id: 'e1',
+        sent_at: later,
+        actor_id: 8,
+        branch_id: 1,
+        order: { ...PENDING, status: 'preparing', status_label: 'Alistando', next_status: 'on_the_way', updated_at: later },
+        from_status: 'pending',
+        to_status: 'preparing',
+      });
+    });
+
+    expect(await within(column(/Alistando/)).findByRole('article', { name: '#0142' })).toBeInTheDocument();
+    expect(within(column(/Pendientes/)).queryByRole('article', { name: '#0142' })).not.toBeInTheDocument();
+  });
+
+  it('marks a new order from someone else with a "Nuevo" label', async () => {
+    renderBoard();
+    const card = await screen.findByRole('article', { name: '#0142' });
+    expect(within(card).queryByText('Nuevo')).not.toBeInTheDocument();
+
+    act(() => highlightOrder(PENDING.id));
+
+    expect(within(card).getByText('Nuevo')).toBeInTheDocument();
   });
 });

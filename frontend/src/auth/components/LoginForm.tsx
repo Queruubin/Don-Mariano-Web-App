@@ -46,14 +46,14 @@ export function LoginForm() {
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-surface-alt px-4 py-8">
-      <div className="card w-full max-w-md p-6 shadow-sm sm:p-8">
-        <img src={logo} alt="Tiendas Don Mariano" className="mx-auto mb-4 h-32 w-auto" />
+      <div className="card w-full max-w-md p-6 shadow-sm sm:p-8 desk:max-w-sm desk:p-7">
+        <img src={logo} alt="Tiendas Don Mariano" className="mx-auto mb-4 h-32 w-auto desk:mb-3 desk:h-24" />
         <h1 className="mb-1 text-center text-2xl">Domicilios</h1>
-        <p className="mb-6 text-center text-text-muted">Ingrese con su correo y contraseña</p>
+        <p className="mb-6 text-center text-text-muted desk:mb-5 desk:text-sm">Ingrese con su correo y contraseña</p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5 desk:space-y-4">
           {error && (
-            <p role="alert" className="rounded-2xl bg-danger-soft p-3 font-semibold text-danger">
+            <p role="alert" className="rounded-2xl bg-danger-soft p-3 font-semibold text-danger desk:rounded-xl desk:text-sm">
               {error}
             </p>
           )}
@@ -90,8 +90,8 @@ export function LoginForm() {
             />
           </div>
 
-          <button type="submit" disabled={isLoading} className="btn btn-primary w-full text-lg">
-            <LogIn aria-hidden="true" className="size-5" />
+          <button type="submit" disabled={isLoading} className="btn btn-primary w-full text-lg desk:text-base">
+            <LogIn aria-hidden="true" className="size-5 desk:size-4" />
             {isLoading ? 'Entrando…' : 'Entrar'}
           </button>
         </form>

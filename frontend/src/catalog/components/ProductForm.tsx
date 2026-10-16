@@ -60,9 +60,9 @@ export function ProductForm({
   const categoryError = fieldError('category');
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="space-y-5 desk:space-y-4">
       {serverErrors?.message && (
-        <p role="alert" className="rounded-2xl bg-danger-soft p-3 font-semibold text-danger">
+        <p role="alert" className="rounded-2xl bg-danger-soft p-3 font-semibold text-danger desk:rounded-xl desk:text-sm">
           {serverErrors.message}
         </p>
       )}
@@ -101,7 +101,7 @@ export function ProductForm({
                 onChange={() => update('default_unit', unit.value)}
                 className="peer sr-only"
               />
-              <span className="flex min-h-14 items-center justify-center rounded-2xl border-2 border-border bg-surface px-3 text-center text-lg font-bold text-text-muted peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-hover">
+              <span className="flex min-h-14 items-center justify-center rounded-2xl border-2 border-border bg-surface px-3 text-center text-lg font-bold desk:min-h-10 desk:rounded-xl desk:text-base text-text-muted peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-hover">
                 {unit.label}
               </span>
             </label>
@@ -141,7 +141,7 @@ export function ProductForm({
         )}
       </div>
 
-      <div className="flex flex-wrap justify-end gap-3 pt-2">
+      <div className="flex flex-wrap justify-end gap-3 pt-2 desk:gap-2">
         <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={submitting}>
           Cancelar
         </button>

@@ -23,7 +23,7 @@ export function MoneyInput({ id, label, hint, value, error, required, onChange }
         {label}
       </label>
       {hint && (
-        <p id={hintId} className="mb-1 text-text-muted">
+        <p id={hintId} className="mb-1 text-text-muted desk:text-sm">
           {hint}
         </p>
       )}
@@ -33,7 +33,7 @@ export function MoneyInput({ id, label, hint, value, error, required, onChange }
         inputMode="numeric"
         autoComplete="off"
         placeholder="$ 0"
-        className="input text-xl font-bold tabular-nums"
+        className="input text-xl font-bold tabular-nums desk:text-lg"
         value={formatMoneyInput(value)}
         onChange={(event) => onChange(event.target.value)}
         aria-required={required || undefined}

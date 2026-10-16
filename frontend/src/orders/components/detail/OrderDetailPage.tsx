@@ -1,7 +1,6 @@
 import {
   ArrowLeft,
   Ban,
-  FileQuestion,
   ListChecks,
   MapPin,
   MessageSquareText,
@@ -15,8 +14,8 @@ import {
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { EmptyState, ErrorState, ListSkeleton } from '../../../shared/components/StatusViews';
-import { apiErrorMessage } from '../../../shared/utils/apiErrors';
+import { ErrorState, ListSkeleton } from '../../../shared/components/StatusViews';
+import { apiErrorMessage, isNotFoundError } from '../../../shared/utils/apiErrors';
 import { describeQuantity } from '../../form/quantity';
 import { money, orderPrintPath } from '../../format';
 import { useOrder } from '../../hooks/useOrders';
@@ -25,15 +24,16 @@ import { formatDateTime } from '../../time';
 import type { Order } from '../../types/order.types';
 import { AdvanceButton } from '../AdvanceButton';
 import { ORDERS_PATH } from '../OrderForm';
+import { OrderNotFound } from '../OrderNotFound';
 import { StatusBadge } from '../StatusBadge';
 import { CancelOrderDialog } from './CancelOrderDialog';
 import { StatusTimeline } from './StatusTimeline';
 
 function Section({ title, icon: Icon, children }: { title: string; icon: LucideIcon; children: ReactNode }) {
   return (
-    <section className="card p-5">
-      <h2 className="mb-3 flex items-center gap-2 text-xl">
-        <Icon aria-hidden="true" className="size-6 text-text-muted" />
+    <section className="card p-5 desk:p-4">
+      <h2 className="mb-3 flex items-center gap-2 text-xl desk:mb-2">
+        <Icon aria-hidden="true" className="size-6 text-text-muted desk:size-5" />
         {title}
       </h2>
       {children}
@@ -50,7 +50,7 @@ function ItemList({ items }: { items: Order['items'] }) {
             <span className="text-lg font-bold tabular-nums">{describeQuantity(item.quantity, item.unit)}</span>
             <span className="text-lg break-words">{item.name}</span>
             {item.is_free_text && (
-              <span className="rounded-full border-2 border-border px-2 text-sm font-bold text-text-muted">
+              <span className="rounded-full border-2 border-border px-2 text-sm font-bold text-text-muted desk:text-xs">
                 Producto libre
               </span>
             )}
@@ -71,42 +71,42 @@ function OrderDetail({ order }: { order: Order }) {
   const phoneHref = `tel:+57${order.customer.phone}`;
 
   return (
-    <div className="space-y-5">
-      <Link to={ORDERS_PATH} className="btn btn-ghost -ml-3 px-3">
-        <ArrowLeft aria-hidden="true" className="size-6" />
+    <div className="space-y-5 desk:space-y-4">
+      <Link to={ORDERS_PATH} className="btn btn-ghost -ml-3 px-3 desk:-ml-2 desk:min-h-9 desk:px-2 desk:text-sm">
+        <ArrowLeft aria-hidden="true" className="size-6 desk:size-5" />
         Volver a domicilios
       </Link>
 
-      <div className="card space-y-4 p-5">
+      <div className="card space-y-4 p-5 desk:space-y-3 desk:p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-4xl tabular-nums">Domicilio {formatOrderNumber(order.number)}</h1>
+          <h1 className="text-4xl tabular-nums desk:text-3xl">Domicilio {formatOrderNumber(order.number)}</h1>
           <StatusBadge status={order.status} size="lg" />
         </div>
-        <p className="text-text-muted">
+        <p className="text-text-muted desk:text-sm">
           Creado el {formatDateTime(order.created_at)} por {order.created_by_name}
         </p>
         {order.status === 'cancelled' && order.cancel_reason && (
-          <p className="flex items-start gap-2 rounded-2xl bg-surface-alt p-3 text-lg font-bold">
-            <Ban aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-status-cancelled" />
+          <p className="flex items-start gap-2 rounded-2xl bg-surface-alt p-3 text-lg font-bold desk:rounded-xl desk:py-2 desk:text-base">
+            <Ban aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-status-cancelled desk:size-5" />
             <span className="break-words">Cancelado. Motivo: {order.cancel_reason}</span>
           </p>
         )}
-        <div className="flex flex-wrap gap-3">
-          <AdvanceButton order={order} className="w-full px-8 sm:w-auto" />
+        <div className="flex flex-wrap gap-3 desk:gap-2">
+          <AdvanceButton order={order} className="w-full px-8 sm:w-auto desk:px-5" />
           {order.is_editable && (
-            <Link to={`/domicilios/${order.id}/editar`} className="btn btn-secondary min-h-14 flex-1 sm:flex-none">
+            <Link to={`/domicilios/${order.id}/editar`} className="btn btn-secondary min-h-14 flex-1 sm:flex-none desk:min-h-10">
               <Pencil aria-hidden="true" className="size-5" />
               Editar
             </Link>
           )}
-          <Link to={orderPrintPath(order.id)} className="btn btn-secondary min-h-14 flex-1 sm:flex-none">
+          <Link to={orderPrintPath(order.id)} className="btn btn-secondary min-h-14 flex-1 sm:flex-none desk:min-h-10">
             <Printer aria-hidden="true" className="size-5" />
             Imprimir
           </Link>
           {!isFinalStatus(order.status) && (
             <button
               type="button"
-              className="btn min-h-14 flex-1 border-2 border-danger bg-surface text-danger hover:bg-danger-soft sm:flex-none"
+              className="btn min-h-14 flex-1 border-2 border-danger bg-surface text-danger hover:bg-danger-soft sm:flex-none desk:min-h-10"
               onClick={() => setCancelling(true)}
             >
               <Ban aria-hidden="true" className="size-5" />
@@ -116,8 +116,8 @@ function OrderDetail({ order }: { order: Order }) {
         </div>
       </div>
 
-      <div className="grid items-start gap-5 lg:grid-cols-[3fr_2fr]">
-        <div className="space-y-5">
+      <div className="grid items-start gap-5 lg:grid-cols-[3fr_2fr] desk:gap-4">
+        <div className="space-y-5 desk:space-y-4">
           <Section title={`Productos (${order.items.length})`} icon={ShoppingBasket}>
             <ItemList items={order.items} />
           </Section>
@@ -131,10 +131,10 @@ function OrderDetail({ order }: { order: Order }) {
           </Section>
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-5 desk:space-y-4">
           <Section title="Cliente" icon={User}>
             <p className="text-lg font-bold break-words">{order.customer.name}</p>
-            <a href={phoneHref} className="btn btn-ghost -ml-3 px-3 text-lg text-primary-hover underline">
+            <a href={phoneHref} className="btn btn-ghost -ml-3 px-3 text-lg text-primary-hover underline desk:-ml-2 desk:min-h-9 desk:px-2 desk:text-base">
               <Phone aria-hidden="true" className="size-5" />
               {order.customer.phone}
             </a>
@@ -177,21 +177,10 @@ export function OrderDetailPage() {
   const orderId = Number(id);
   const order = useOrder(orderId, { live: true });
 
-  if (!Number.isInteger(orderId)) {
-    return (
-      <EmptyState
-        icon={FileQuestion}
-        title="No encontramos ese domicilio"
-        actions={
-          <Link to={ORDERS_PATH} className="btn btn-primary">
-            Ver domicilios
-          </Link>
-        }
-      />
-    );
-  }
+  if (!Number.isInteger(orderId)) return <OrderNotFound />;
   if (order.isPending) return <ListSkeleton rows={4} />;
   if (order.isError) {
+    if (isNotFoundError(order.error)) return <OrderNotFound />;
     return (
       <ErrorState
         message={`No pudimos cargar el domicilio. ${apiErrorMessage(order.error)}`}

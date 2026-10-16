@@ -40,7 +40,7 @@ export function CartSection({
       className="lg:col-start-1 lg:row-span-2 lg:row-start-1"
       aside={
         lines.length > 0 && (
-          <span className="rounded-full bg-surface px-3 py-1 font-bold text-text-muted">{productsLabel(lines.length)}</span>
+          <span className="rounded-full bg-surface px-3 py-1 font-bold text-text-muted desk:py-0.5 desk:text-sm">{productsLabel(lines.length)}</span>
         )
       }
     >
@@ -48,13 +48,13 @@ export function CartSection({
       <FieldError id="order-lines-error" message={errors.lines} />
 
       {lines.length === 0 ? (
-        <div className="mt-4 rounded-2xl border-2 border-dashed border-border px-4 py-8 text-center text-text-muted">
-          <ShoppingBasket aria-hidden="true" className="mx-auto mb-2 size-10" />
+        <div className="mt-4 rounded-2xl border-2 border-dashed border-border px-4 py-8 text-center text-text-muted desk:mt-3 desk:rounded-xl desk:py-6">
+          <ShoppingBasket aria-hidden="true" className="mx-auto mb-2 size-10 desk:size-8" />
           <p className="text-lg font-bold">Todavía no hay productos</p>
           <p>Escriba arriba el nombre del producto y tóquelo para agregarlo.</p>
         </div>
       ) : (
-        <ul aria-label="Productos del domicilio" className="mt-4 space-y-3">
+        <ul aria-label="Productos del domicilio" className="mt-4 space-y-3 desk:mt-3 desk:space-y-2">
           {newestFirst.map((line) => (
             <CartLineRow
               key={line.key}

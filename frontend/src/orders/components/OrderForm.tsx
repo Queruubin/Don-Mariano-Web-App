@@ -113,13 +113,20 @@ export function OrderForm({ mode, title, initialValues, orderId, draftKey, resto
   const latestValues = useRef(values);
   latestValues.current = values;
   const canSaveDraft = draftKey != null && state.touched && saved == null;
-  useEffect(() => {
-    if (!canSaveDraft) return;
-    const timer = setTimeout(() => saveDraft(draftKey, values), DRAFT_SAVE_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [canSaveDraft, draftKey, values]);
+  // Read at write time, not render time: a pending save must not run after the
+  // draft was cleared (publish/discard) but before React re-renders.
   const canSaveDraftRef = useRef(canSaveDraft);
   canSaveDraftRef.current = canSaveDraft;
+  const stopDraftSaving = () => {
+    canSaveDraftRef.current = false;
+  };
+  useEffect(() => {
+    if (!canSaveDraft) return;
+    const timer = setTimeout(() => {
+      if (canSaveDraftRef.current) saveDraft(draftKey, values);
+    }, DRAFT_SAVE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [canSaveDraft, draftKey, values]);
   useEffect(() => {
     if (draftKey == null) return;
     // Flush the pending save when the tab is closed or the page is left.
@@ -143,6 +150,7 @@ export function OrderForm({ mode, title, initialValues, orderId, draftKey, resto
     setServerErrors({});
     setGeneralError(null);
     setLastAddedKey(null);
+    stopDraftSaving();
     if (draftKey) clearDraft(draftKey);
     if (focusPhone) requestAnimationFrame(() => document.getElementById('order-phone')?.focus());
   };
@@ -168,6 +176,7 @@ export function OrderForm({ mode, title, initialValues, orderId, draftKey, resto
   const confirm = () => {
     saveOrder.mutate(toOrderInput(values), {
       onSuccess: (order) => {
+        stopDraftSaving();
         if (draftKey) clearDraft(draftKey);
         setConfirming(false);
         setShowDraftBanner(false);
@@ -225,8 +234,11 @@ export function OrderForm({ mode, title, initialValues, orderId, draftKey, resto
 
       <div id={MESSAGE_ID} tabIndex={-1} aria-live="assertive">
         {generalError && (
-          <p role="alert" className="mb-4 flex items-start gap-2 rounded-2xl bg-danger-soft p-3 text-lg font-semibold text-danger">
-            <CircleAlert aria-hidden="true" className="mt-1 size-5 shrink-0" />
+          <p
+            role="alert"
+            className="mb-4 flex items-start gap-2 rounded-2xl bg-danger-soft p-3 text-lg font-semibold text-danger desk:rounded-xl desk:py-2 desk:text-base"
+          >
+            <CircleAlert aria-hidden="true" className="mt-1 size-5 shrink-0 desk:size-4" />
             {generalError}
           </p>
         )}

@@ -56,7 +56,8 @@ function renderPage() {
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
-  return { user: userEvent.setup(), router };
+  // No per-keystroke delay: these flows type long strings and only debounce matters.
+  return { user: userEvent.setup({ delay: null }), router };
 }
 
 const search = () => screen.getByRole('combobox', { name: 'Agregar producto' });

@@ -5,7 +5,7 @@ export function FieldError({ id, message }: { id: string; message?: string | nul
   if (!message) return null;
   return (
     <p id={id} className="field-error flex items-start gap-1">
-      <CircleAlert aria-hidden="true" className="mt-1 size-5 shrink-0" />
+      <CircleAlert aria-hidden="true" className="mt-1 size-5 shrink-0 desk:mt-0.5 desk:size-4" />
       <span>{message}</span>
     </p>
   );

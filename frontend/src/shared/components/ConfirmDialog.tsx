@@ -44,7 +44,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <div className="space-y-3 text-lg">{children}</div>
+      <div className="space-y-3 text-lg desk:text-base">{children}</div>
       {error && (
         <p role="alert" className="mt-3 rounded-2xl bg-danger-soft p-3 font-semibold text-danger">
           {error}

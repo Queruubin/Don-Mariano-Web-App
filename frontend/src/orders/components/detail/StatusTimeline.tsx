@@ -50,18 +50,18 @@ export function StatusTimeline({ order }: { order: Pick<Order, 'status' | 'statu
           <li key={step.key} className="flex gap-3">
             <div className="flex flex-col items-center">
               <span
-                className={`flex size-11 shrink-0 items-center justify-center rounded-full border-2 ${
+                className={`flex size-11 shrink-0 items-center justify-center rounded-full border-2 desk:size-9 ${
                   step.done ? DOT[step.status] : 'border-dashed border-border bg-surface text-text-muted'
                 }`}
               >
-                <Icon aria-hidden="true" className="size-6" />
+                <Icon aria-hidden="true" className="size-6 desk:size-5" />
               </span>
               {!isLast && <span aria-hidden="true" className="w-0.5 flex-1 bg-border" />}
             </div>
-            <div className={`min-w-0 pb-4 ${step.done ? '' : 'text-text-muted'}`}>
-              <p className="text-lg font-bold">{label}</p>
+            <div className={`min-w-0 pb-4 desk:pb-3 ${step.done ? '' : 'text-text-muted'}`}>
+              <p className="text-lg font-bold desk:text-base">{label}</p>
               {step.done ? (
-                <p className="text-text-muted">
+                <p className="text-text-muted desk:text-sm">
                   {step.at && formatDateTime(step.at)}
                   {step.by && ` · por ${step.by}`}
                 </p>
