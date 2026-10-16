@@ -8,10 +8,11 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from django.db import transaction
+from django.utils import timezone
 
 from apps.branches.models import Branch
 from apps.catalog.models import Product
-from apps.common.exceptions import DomainError
+from apps.common.exceptions import ConflictError, DomainError
 from apps.customers.models import Customer, CustomerAddress
 from apps.customers.services import upsert_address, upsert_customer, use_saved_address
 from apps.orders.models import Order, OrderItem, OrderStatus, OrderStatusEvent, PaymentMethod
@@ -116,9 +117,9 @@ def _create_items(order: Order, items: list[ItemData]) -> None:
     )
 
 
-def _record_event(order: Order, from_status: str, to_status: str, user) -> None:
+def _record_event(order: Order, from_status: str, to_status: str, user, reason: str = "") -> None:
     OrderStatusEvent.objects.create(
-        order=order, from_status=from_status, to_status=to_status, changed_by=user
+        order=order, from_status=from_status, to_status=to_status, changed_by=user, reason=reason
     )
 
 
@@ -205,10 +206,43 @@ def update_order(
     return order
 
 
+STALE_STATUS_MESSAGE = "Este domicilio ya cambió de estado."
+
+
+def _check_expected_status(order: Order, expected_status: str | None) -> None:
+    """Reject a change made from an outdated screen (two tablets, same order)."""
+    if expected_status is not None and expected_status != order.status:
+        raise ConflictError(
+            f"{STALE_STATUS_MESSAGE} Ahora está \"{OrderStatus(order.status).label}\".",
+            code="stale_status",
+            extra={"status": order.status},
+        )
+
+
+def _set_status(order: Order, to_status: str, *, user, reason: str = "") -> Order:
+    previous = order.status
+    order.status = to_status
+    order.status_changed_at = timezone.now()
+    fields = ["status", "status_changed_at", "updated_at"]
+    if reason:
+        order.cancel_reason = reason
+        fields.append("cancel_reason")
+    order.save(update_fields=fields)
+    _record_event(order, previous, to_status, user, reason)
+    return order
+
+
 @transaction.atomic
-def advance_order(order: Order, *, user, to_status: str | None = None) -> Order:
-    """Move an order one step forward (FR-28). `to_status`, if given, must be that step."""
+def advance_order(
+    order: Order, *, user, to_status: str | None = None, expected_status: str | None = None
+) -> Order:
+    """Move an order one step forward (FR-28).
+
+    `to_status`, if given, must be that step. `expected_status` is the status the
+    client saw; when it no longer matches, the change is rejected with HTTP 409.
+    """
     order = _lock(order)
+    _check_expected_status(order, expected_status)
     expected = next_status(order.status)
     if expected is None:
         raise DomainError("Este pedido ya está finalizado.", code="order_final")
@@ -219,24 +253,16 @@ def advance_order(order: Order, *, user, to_status: str | None = None) -> Order:
             field="to_status",
             code="invalid_transition",
         )
-    previous = order.status
-    order.status = expected
-    order.save(update_fields=["status", "updated_at"])
-    _record_event(order, previous, expected, user)
-    return order
+    return _set_status(order, expected, user=user)
 
 
 @transaction.atomic
-def cancel_order(order: Order, *, user, reason: str) -> Order:
+def cancel_order(order: Order, *, user, reason: str, expected_status: str | None = None) -> Order:
     reason = (reason or "").strip()
     if not reason:
         raise DomainError("Indique el motivo de la cancelación.", field="reason", code="reason_required")
     order = _lock(order)
+    _check_expected_status(order, expected_status)
     if order.status in FINAL_STATUSES:
         raise DomainError("Este pedido ya está finalizado.", code="order_final")
-    previous = order.status
-    order.status = OrderStatus.CANCELLED
-    order.cancel_reason = reason
-    order.save(update_fields=["status", "cancel_reason", "updated_at"])
-    _record_event(order, previous, OrderStatus.CANCELLED, user)
-    return order
+    return _set_status(order, OrderStatus.CANCELLED, user=user, reason=reason)

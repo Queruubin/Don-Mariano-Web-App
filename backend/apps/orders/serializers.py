@@ -28,7 +28,7 @@ class OrderStatusEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderStatusEvent
-        fields = ["from_status", "to_status", "changed_by", "changed_by_name", "changed_at"]
+        fields = ["from_status", "to_status", "changed_by", "changed_by_name", "changed_at", "reason"]
 
 
 class OrderCustomerSerializer(serializers.Serializer):
@@ -54,7 +54,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "customer", "address_snapshot", "address_notes",
             "payment_method", "total_amount", "pays_with", "change_due",
             "notes", "cancel_reason", "items", "status_events",
-            "created_by", "created_by_name", "created_at", "updated_at",
+            "created_by", "created_by_name", "created_at", "updated_at", "status_changed_at",
         ]
         read_only_fields = fields
 
@@ -71,8 +71,18 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderListSerializer(OrderSerializer):
+    """Board card data: no items or history, just how many items there are.
+
+    Expects the queryset to annotate `item_count`.
+    """
+
+    item_count = serializers.IntegerField(read_only=True)
+
     class Meta(OrderSerializer.Meta):
-        fields = [f for f in OrderSerializer.Meta.fields if f not in ("items", "status_events")]
+        fields = [
+            *(f for f in OrderSerializer.Meta.fields if f not in ("items", "status_events")),
+            "item_count",
+        ]
         read_only_fields = fields
 
 
@@ -220,11 +230,34 @@ class OrderUpdateSerializer(PaymentFieldsMixin):
         )
 
 
-class TransitionSerializer(serializers.Serializer):
-    to_status = serializers.ChoiceField(choices=OrderStatus.choices, required=False)
+NEXT = "next"
+INVALID_STATUS_MESSAGE = "Estado no válido."
 
 
-class CancelSerializer(serializers.Serializer):
+class ExpectedStatusMixin(serializers.Serializer):
+    """`expected_status` is the status the client saw. A mismatch is answered with 409."""
+
+    expected_status = serializers.ChoiceField(
+        choices=OrderStatus.choices,
+        required=False,
+        error_messages={"invalid_choice": INVALID_STATUS_MESSAGE},
+    )
+
+
+class TransitionSerializer(ExpectedStatusMixin):
+    """`to_status` is the target status or "next". Omitted means "next"."""
+
+    to_status = serializers.ChoiceField(
+        choices=[*OrderStatus.values, NEXT],
+        required=False,
+        error_messages={"invalid_choice": INVALID_STATUS_MESSAGE},
+    )
+
+    def validate_to_status(self, value):
+        return None if value == NEXT else value
+
+
+class CancelSerializer(ExpectedStatusMixin):
     reason = serializers.CharField(
         max_length=255,
         error_messages={

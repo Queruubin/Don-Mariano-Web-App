@@ -22,6 +22,7 @@ import {
   type OrderFormErrors,
   type OrderFormValues,
 } from '../form/orderForm';
+import { orderPrintPath } from '../format';
 import { useCustomerLookup, useSaveOrder } from '../hooks/useOrders';
 import type { Order } from '../types/order.types';
 import { CartSection } from './form/CartSection';
@@ -204,6 +205,7 @@ export function OrderForm({ mode, title, initialValues, orderId, draftKey, resto
             : undefined
         }
         onViewOrders={() => navigate(ORDERS_PATH)}
+        onPrint={() => navigate(orderPrintPath(saved.id))}
       />
     );
   }

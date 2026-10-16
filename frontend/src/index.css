@@ -117,3 +117,18 @@
     @apply mt-1 text-base font-semibold text-danger;
   }
 }
+
+/* Printed tickets (FR-31): small margins, white paper, text sized in points. */
+@media print {
+  @page {
+    margin: 4mm;
+  }
+
+  html {
+    font-size: 100%;
+  }
+
+  body {
+    background: #fff;
+  }
+}

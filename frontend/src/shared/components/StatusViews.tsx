@@ -1,4 +1,4 @@
-import { CircleAlert, type LucideIcon } from 'lucide-react';
+import { CircleAlert, Store, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export function EmptyState({
@@ -57,5 +57,34 @@ export function PlaceholderPage({ title, children }: { title: string; children: 
       <h1 className="mb-4 text-3xl">{title}</h1>
       <div className="card p-6 text-lg text-text-muted">{children}</div>
     </div>
+  );
+}
+
+/**
+ * Shown instead of a branch-scoped page while no branch is active.
+ * `reason` is "pick" for a super admin who has not chosen one yet, and
+ * "unassigned" for a branch user whose account has no active branch.
+ */
+export function NoBranchState({
+  reason = 'pick',
+  actions,
+  children,
+}: {
+  reason?: 'pick' | 'unassigned';
+  actions?: ReactNode;
+  /** Replaces the default hint, e.g. on screens without the header selector. */
+  children?: ReactNode;
+}) {
+  if (reason === 'unassigned') {
+    return (
+      <EmptyState icon={Store} title="Su usuario no tiene una sede" actions={actions}>
+        Pídale al administrador que le asigne una sede para poder trabajar.
+      </EmptyState>
+    );
+  }
+  return (
+    <EmptyState icon={Store} title="Seleccione una sede para continuar" actions={actions}>
+      {children ?? 'Elija la sede en el selector «Sede» de la parte de arriba de la pantalla.'}
+    </EmptyState>
   );
 }

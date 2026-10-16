@@ -1,4 +1,4 @@
-import { FileSpreadsheet, PackageOpen, Plus, Search, SearchX, Store, X } from 'lucide-react';
+import { FileSpreadsheet, PackageOpen, Plus, Search, SearchX, X } from 'lucide-react';
 import { useId, useState } from 'react';
 import { canManageCatalog } from '../../auth/roles';
 import { useAuthStore } from '../../auth/store/authStore';
@@ -41,15 +41,6 @@ export function CatalogPage() {
     setDialog({ kind: 'none' });
     setActive.reset();
   };
-
-  if (branch.isLoading) return <ListSkeleton />;
-  if (branch.id == null) {
-    return (
-      <EmptyState icon={Store} title="Elija una sede">
-        Seleccione arriba la sede para ver su catálogo.
-      </EmptyState>
-    );
-  }
 
   const items = products.data?.pages.flatMap((page) => page.results) ?? [];
   const total = products.data?.pages[0]?.count ?? 0;

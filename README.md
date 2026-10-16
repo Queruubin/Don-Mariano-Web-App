@@ -99,7 +99,8 @@ All endpoints are under `/api/` and need a `Bearer` access token, except login a
 | `GET /api/products/categories/` | Distinct categories of the branch |
 | `GET /api/products/import-template/`, `POST /api/products/import/preview/`, `POST /api/products/import/apply/` | Excel import (.xlsx): template, preview without writing, then apply. Branch admins and above |
 | `/api/customers/`, `GET /api/customers/lookup/?phone=` | Customer lookup. Saved addresses come most recently used first |
-| `/api/orders/`, `POST .../transition/`, `POST .../cancel/` | Orders and their lifecycle. `PATCH` edits pending and preparing orders (items, payment, total, notes, customer and address) |
+| `/api/orders/` | Orders, newest first. Filters: `?status=pending,preparing`, `?active=true` (not delivered or cancelled), `?board=true` (active orders plus the ones delivered or cancelled on `?date=`, today by default), `?date=YYYY-MM-DD` without `board` (created that day), `?since=<ISO 8601>` (changed after that moment). `?page_size=` up to 200. List rows are light (`item_count`, no items); the detail adds items and the status history. `PATCH` edits pending and preparing orders (items, payment, total, notes, customer and address) |
+| `POST /api/orders/{id}/transition/`, `POST /api/orders/{id}/cancel/` | Lifecycle. `transition` takes `to_status` (the next status or `"next"`); `cancel` requires `reason`. Both accept `expected_status`, the status the screen showed: if the order changed meanwhile the API answers `409` with `"Este domicilio ya cambió de estado…"` |
 
 Creating or editing an order sends a `customer` block with `phone`, `name`, `address_notes` and either `address_id` (one of the customer's saved addresses) or `address` (a new one, saved for next time). Phones are stored as digits only, without the Colombian `+57` prefix, so `+57 300 123 4567` and `300-123-4567` are the same customer.
 

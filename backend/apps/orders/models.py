@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import F, Q
+from django.utils import timezone
 
 from apps.common.units import Unit
 
@@ -38,6 +39,9 @@ class Order(models.Model):
         max_length=12, choices=OrderStatus.choices, default=OrderStatus.PENDING
     )
     cancel_reason = models.CharField(max_length=255, blank=True)
+    # When the current status was reached. The board uses it to keep today's
+    # delivered and cancelled orders visible.
+    status_changed_at = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="created_orders"
     )
@@ -62,6 +66,7 @@ class Order(models.Model):
         ]
         indexes = [
             models.Index(fields=["branch", "status", "-created_at"], name="order_branch_status_idx"),
+            models.Index(fields=["branch", "updated_at"], name="order_branch_updated_idx"),
         ]
 
     def __str__(self):
@@ -99,6 +104,8 @@ class OrderStatusEvent(models.Model):
     # Empty for the creation event.
     from_status = models.CharField(max_length=12, choices=OrderStatus.choices, blank=True)
     to_status = models.CharField(max_length=12, choices=OrderStatus.choices)
+    # The cancellation reason, for events that cancel the order.
+    reason = models.CharField(max_length=255, blank=True)
     changed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="order_status_events"
     )

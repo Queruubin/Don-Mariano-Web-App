@@ -35,10 +35,29 @@ export interface OrderSummary {
   created_by_name: string;
   created_at: string;
   updated_at: string;
+  /** When the current status was reached. */
+  status_changed_at: string;
+}
+
+/** A card on the order board: no items, just how many there are. */
+export interface BoardOrder extends OrderSummary {
+  item_count: number;
+}
+
+export interface OrderStatusEvent {
+  /** Empty for the creation event. */
+  from_status: OrderStatus | '';
+  to_status: OrderStatus;
+  changed_by: number;
+  changed_by_name: string;
+  changed_at: string;
+  /** The cancellation reason, on events that cancel the order. */
+  reason: string;
 }
 
 export interface Order extends OrderSummary {
   items: OrderItem[];
+  status_events: OrderStatusEvent[];
 }
 
 export interface OrderItemInput {

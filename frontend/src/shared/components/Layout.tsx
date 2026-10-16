@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { AppHeader } from './AppHeader';
 import { AppNav } from './AppNav';
+import { Toaster } from './Toaster';
 
 /** Tablet-first shell: header on top, side rail on tablet/desktop, bottom bar on phones. */
 export function Layout() {
@@ -16,6 +17,7 @@ export function Layout() {
           </div>
         </main>
       </div>
+      <Toaster />
     </div>
   );
 }
